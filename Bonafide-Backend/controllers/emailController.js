@@ -29,13 +29,26 @@ const fetchDataFromRedis = async () => {
 // Push a single student's data to blockchain
 const pushDataToBlockchain = async (EMAIL) => {
   try {
-    console.log("Starting Transaction for ",EMAIL);
-    
+    console.log("Starting Transaction for ", EMAIL);
+
     // Modify according to your contract's expected input structure
-    const tx = await contract.storeEmailHash(EMAIL); 
+    const tx = await contract.storeEmailHash(EMAIL);
     const receipt = await tx.wait(); // Wait for mining confirmation
 
     console.log('✅ Transaction successful with hash:', receipt.hash);
+
+    const updated = await Student.findOneAndUpdate(
+      { email: EMAIL },
+      { blockchainTxnHash: receipt.hash },
+      { new: true }
+    );
+
+    if (!updated) {
+      console.warn(`⚠️ No student found with email ${EMAIL} to update with txn hash.`);
+    } else {
+      console.log(`📝 Transaction hash saved to DB for ${EMAIL}`);
+    }
+
   } catch (err) {
     console.error('❌ Blockchain write error:', err);
     throw new Error('Error pushing data to blockchain: ' + err.message);
@@ -47,20 +60,20 @@ const syncDataToBlockchain = async (req, res) => {
   try {
     // Fetch data
     const studentData = await fetchDataFromRedis();
-    
+
 
     if (!Array.isArray(studentData) || studentData.length === 0) {
-        return res.status(400).send('No valid student data available for synchronization.');
+      return res.status(400).send('No valid student data available for synchronization.');
+    }
+
+    // Sync each student
+    for (const student of studentData) {
+      if (student.EMAIL) {
+        await pushDataToBlockchain(student.EMAIL);
       }
-      
-      // Sync each student
-      for (const student of studentData) {
-        if (student.EMAIL) {
-          await pushDataToBlockchain(student.EMAIL);
-        }
-      }
-      
-      
+    }
+
+
 
     res.status(200).send('✅ All student data successfully synchronized with the blockchain.');
   } catch (err) {

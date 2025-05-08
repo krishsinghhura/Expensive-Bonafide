@@ -5,6 +5,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const blockRoutes=require("./routes/emaiRoutes")
 const universityRoutes = require('./routes/universityRoutes');
 const studentRoutes = require('./routes/studentRoutes');
+const verifyRoutes = require('./routes/verifyRoutes');
 
 const app = express();
 
@@ -17,5 +18,7 @@ app.use("/block",blockRoutes)
 
 app.use('/api/university', universityRoutes);
 app.use('/api/student' , studentRoutes);
+app.use('/verify' , verifyRoutes);
+
 
 module.exports = app;
