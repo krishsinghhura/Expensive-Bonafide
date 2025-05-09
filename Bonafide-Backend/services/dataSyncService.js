@@ -1,5 +1,5 @@
 const redis = require('../redis/redisClient');
-const Student = require('../model/data');
+const Data = require('../model/data');
 
 const pushDataToMongo = async () => {
   try {
@@ -20,7 +20,7 @@ const pushDataToMongo = async () => {
       cgpa: parseFloat(row.CGPA),
     }));
 
-    await Student.insertMany(formatted);
+    await Data.insertMany(formatted);
     console.log('✅ Data successfully pushed to MongoDB!');
   } catch (err) {
     console.error('❌ Failed to push Redis data to MongoDB:', err);

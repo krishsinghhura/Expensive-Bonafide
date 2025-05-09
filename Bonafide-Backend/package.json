@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
     "bcryptjs": "^3.0.2",
+    "canvas": "^3.1.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",
@@ -23,6 +24,7 @@
     "merkletreejs": "^0.5.2",
     "mongoose": "^8.14.1",
     "node-cron": "^3.0.3",
+    "nodemailer": "^7.0.3",
     "nodemon": "^3.1.10",
     "redis": "^5.0.1"
   }

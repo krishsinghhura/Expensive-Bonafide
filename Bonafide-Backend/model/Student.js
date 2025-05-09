@@ -6,4 +6,4 @@ const studentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Check if the model is already defined
-module.exports = mongoose.models.Student || mongoose.model('Students', studentSchema);
+module.exports = mongoose.models.Student || mongoose.model('Student', studentSchema);

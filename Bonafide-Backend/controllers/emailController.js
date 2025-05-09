@@ -1,6 +1,10 @@
 const { ethers } = require('ethers');
 const redis = require('../redis/redisClient'); // Redis client instance
 const abi = require('../abi.json'); // Smart contract ABI
+const Data=require("../model/data")
+const generateCertificate = require('../services/generateTemplate');
+const nodemailer = require('nodemailer');
+const path = require('path');
 
 
 require('dotenv').config();// Initialize Ethereum provider and signer
@@ -29,18 +33,78 @@ const fetchDataFromRedis = async () => {
 // Push a single student's data to blockchain
 const pushDataToBlockchain = async (EMAIL) => {
   try {
-    console.log("Starting Transaction for ",EMAIL);
-    
-    // Modify according to your contract's expected input structure
-    const tx = await contract.storeEmailHash(EMAIL); 
-    const receipt = await tx.wait(); // Wait for mining confirmation
+    console.log("Starting Transaction for ", EMAIL);
+
+    // Blockchain transaction
+    const tx = await contract.storeEmailHash(EMAIL);
+    const receipt = await tx.wait();
 
     console.log('✅ Transaction successful with hash:', receipt.hash);
+
+    // Update MongoDB with the transaction hash
+    const updated = await Data.findOneAndUpdate(
+      { email: EMAIL },
+      { blockchainTxnHash: receipt.hash },
+      { new: true }
+    );
+
+    if (!updated) {
+      console.warn(`⚠️ No student found with email ${EMAIL} to update with txn hash.`);
+      return;
+    } else {
+      console.log(`📝 Transaction hash saved to DB for ${EMAIL}`);
+    }
+
+    // Generate certificate with student data
+    const { name, department, registrationNumber, cgpa } = updated;
+
+    const outputFileName = name.replace(/\s+/g, '_');
+    const certPath = await generateCertificate({
+      name,
+      department,
+      regNumber: registrationNumber,
+      cgpa,
+      outputFileName: name.replace(/\s+/g, '_')
+    });
+
+    console.log(`🎓 Certificate generated at: ${certPath}`);
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Centurion University" <${process.env.EMAIL_USER}>`,
+      to: EMAIL,
+      subject: '🎓 Your Degree Certificate',
+      html: `
+        <p>Dear <b>${name}</b>,</p>
+        <p>Congratulations! Please find attached your official Degree Certificate from Centurion University.</p>
+        <p>Best regards,<br/>Centurion University</p>
+      `,
+      attachments: [
+        {
+          filename: `${outputFileName}.png`,
+          path: certPath,
+          cid: 'degreeCert' // optional if you want to embed it in HTML later
+        }
+      ]
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`📧 Email sent successfully to ${EMAIL}`);
+    console.log(`Completed for ${EMAIL}`);
+    
+
   } catch (err) {
     console.error('❌ Blockchain write error:', err);
     throw new Error('Error pushing data to blockchain: ' + err.message);
   }
 };
+
 
 // Express controller function
 const syncDataToBlockchain = async (req, res) => {

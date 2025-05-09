@@ -7,6 +7,7 @@ const studentSchema = new mongoose.Schema({
   registration_number: { type: String, required: true },
   department: { type: String, required: true },
   cgpa: { type: Number, required: true },
+  blockchainTxnHash: { type: String, default: null },
 }, { timestamps: true });
 
-module.exports = mongoose.model("Student", studentSchema);
+module.exports = mongoose.model("Data", studentSchema);
