@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 const Data = require("../model/data"); // Adjust the path if needed
+=======
+const Student = require('../models/student'); // Adjust the path if needed
+>>>>>>> 8e2de42e3d34390e4219769c066ddb8c65b270fe
 
 const verifyStudent = async (req, res) => {
   try {
@@ -8,7 +12,11 @@ const verifyStudent = async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
 
+<<<<<<< HEAD
     const student = await Data.findOne({ email });
+=======
+    const student = await Student.findOne({ email });
+>>>>>>> 8e2de42e3d34390e4219769c066ddb8c65b270fe
 
     if (!student) {
       return res.status(404).json({ error: 'Student not found' });
@@ -30,4 +38,8 @@ const verifyStudent = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
 module.exports = { verifyStudent };
+=======
+module.exports = { verifyStudent };
+>>>>>>> 8e2de42e3d34390e4219769c066ddb8c65b270fe

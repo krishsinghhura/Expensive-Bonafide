@@ -35,6 +35,7 @@ const pushDataToBlockchain = async (EMAIL) => {
   try {
     console.log("Starting Transaction for ", EMAIL);
 
+<<<<<<< HEAD
     // Blockchain transaction
     const tx = await contract.storeEmailHash(EMAIL);
     const receipt = await tx.wait();
@@ -43,6 +44,15 @@ const pushDataToBlockchain = async (EMAIL) => {
 
     // Update MongoDB with the transaction hash
     const updated = await Data.findOneAndUpdate(
+=======
+    // Modify according to your contract's expected input structure
+    const tx = await contract.storeEmailHash(EMAIL);
+    const receipt = await tx.wait(); // Wait for mining confirmation
+
+    console.log('✅ Transaction successful with hash:', receipt.hash);
+
+    const updated = await Student.findOneAndUpdate(
+>>>>>>> 8e2de42e3d34390e4219769c066ddb8c65b270fe
       { email: EMAIL },
       { blockchainTxnHash: receipt.hash },
       { new: true }
@@ -50,11 +60,15 @@ const pushDataToBlockchain = async (EMAIL) => {
 
     if (!updated) {
       console.warn(`⚠️ No student found with email ${EMAIL} to update with txn hash.`);
+<<<<<<< HEAD
       return;
+=======
+>>>>>>> 8e2de42e3d34390e4219769c066ddb8c65b270fe
     } else {
       console.log(`📝 Transaction hash saved to DB for ${EMAIL}`);
     }
 
+<<<<<<< HEAD
     // Generate certificate with student data
     const { name, department, registrationNumber, cgpa } = updated;
 
@@ -99,6 +113,8 @@ const pushDataToBlockchain = async (EMAIL) => {
     console.log(`Completed for ${EMAIL}`);
     
 
+=======
+>>>>>>> 8e2de42e3d34390e4219769c066ddb8c65b270fe
   } catch (err) {
     console.error('❌ Blockchain write error:', err);
     throw new Error('Error pushing data to blockchain: ' + err.message);
@@ -111,20 +127,20 @@ const syncDataToBlockchain = async (req, res) => {
   try {
     // Fetch data
     const studentData = await fetchDataFromRedis();
-    
+
 
     if (!Array.isArray(studentData) || studentData.length === 0) {
-        return res.status(400).send('No valid student data available for synchronization.');
+      return res.status(400).send('No valid student data available for synchronization.');
+    }
+
+    // Sync each student
+    for (const student of studentData) {
+      if (student.EMAIL) {
+        await pushDataToBlockchain(student.EMAIL);
       }
-      
-      // Sync each student
-      for (const student of studentData) {
-        if (student.EMAIL) {
-          await pushDataToBlockchain(student.EMAIL);
-        }
-      }
-      
-      
+    }
+
+
 
     res.status(200).send('✅ All student data successfully synchronized with the blockchain.');
   } catch (err) {

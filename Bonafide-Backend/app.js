@@ -20,5 +20,7 @@ app.use('/verify' , verifyRoutes);
 
 app.use('/api/university', universityRoutes);
 app.use('/api/student' , studentRoutes);
+app.use('/verify' , verifyRoutes);
+
 
 module.exports = app;
