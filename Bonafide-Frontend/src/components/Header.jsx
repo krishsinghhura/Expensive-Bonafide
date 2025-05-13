@@ -1,14 +1,18 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 
 const Header = () => (
   <header className="bg-white shadow-lg rounded-b-2xl ring-1 ring-gray-200 sticky top-0 z-50">
     <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
       <div className="flex items-center">
-        <img
-          className="h-12 w-auto"
-          src="./public/bonafide-logo.png"
-          alt="Bonafide Logo"
-        />
+        {/* Wrap the logo in a Link component to redirect to homepage */}
+        <Link to="/">
+          <img
+            className="h-12 w-auto"
+            src="./public/bonafide-logo.png"
+            alt="Bonafide Logo"
+          />
+        </Link>
       </div>
       <nav className="flex space-x-6 items-center">
         <a
