@@ -6,6 +6,7 @@ import VerifyAadhaar from "./pages/VerifyAadhaar";
 import Home from "./pages/Home";
 import UniversitySignIn from "./pages/UniversitySignIn";
 import AuthPage from "./pages/Auth";
+import Contact from "./pages/Contact"
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/verify-student" element={<VerifyAadhaar/>} />
         <Route path="/verify" element={<UniversitySignIn/>} />
         <Route path="/auth" element={<AuthPage/>} />
+        <Route path="/contact" element={<Contact/>} />
       </Routes>
     </BrowserRouter>
   );
