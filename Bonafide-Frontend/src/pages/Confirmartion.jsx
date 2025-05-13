@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import  {uploadMerkleRoot}  from "../utils/uploadMerkleRoot"
+import { uploadMerkleRoot } from "../utils/uploadMerkleRoot";
 
 const ConfirmBlockchainPost = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [counter, setCounter] = useState(0);
+  const [isCounting, setIsCounting] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -15,53 +17,63 @@ const ConfirmBlockchainPost = () => {
       if (response.ok && result.data) {
         setData(result.data);
       } else {
-        alert(" Failed to fetch data from Redis.");
+        alert("Failed to fetch data from Redis.");
       }
     } catch (error) {
       console.error("Error fetching Redis data:", error);
-      alert(" Error while fetching Redis data.");
+      alert("Error while fetching Redis data.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleConfirm = async () => {
+    setIsCounting(true);
+    setCounter(0);
+
+    let count = 0;
+    const interval = setInterval(() => {
+      count += 1;
+      setCounter(count);
+
+      if (count >= data.length) {
+        clearInterval(interval);
+        setIsCounting(false);
+      }
+    }, 11000); 
+
     try {
-      const response = await fetch("http://localhost:4000/block/confirm", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ data }),
+      const response = await fetch("http://localhost:4000/block/upload-email", {
+        method: "GET",
       });
-  
+
       const result = await response.json();
-      
-  
+
       if (response.ok) {
         const merkleRoot = result.merkleRoot;
-  
+
         if (!merkleRoot) {
           alert("❌ No Merkle root returned from backend.");
+          clearInterval(interval);
+          setIsCounting(false);
           return;
         }
-  
+
         const blockchainSuccess = await uploadMerkleRoot(merkleRoot);
         console.log(merkleRoot);
-        
-  
+
         if (blockchainSuccess) {
-          alert(" Data confirmed and Merkle root stored on blockchain!");
+          alert("✅ Data confirmed and Merkle root stored on blockchain!");
           navigate("/validate");
         } else {
-          alert(" Merkle root failed to upload to blockchain.");
+          alert("❌ Merkle root failed to upload to blockchain.");
         }
       } else {
-        alert(` Failed to post: ${result.error}`);
+        alert(`❌ Failed to post: ${result.error}`);
       }
     } catch (err) {
       console.error(err);
-      alert(" Error posting to blockchain.");
+      alert("❌ Error posting to blockchain.");
     }
   };
 
@@ -104,10 +116,11 @@ const ConfirmBlockchainPost = () => {
             </table>
           </div>
 
-          <div className="mt-6 flex gap-4">
+          <div className="mt-6 flex gap-4 items-center">
             <button
               onClick={handleConfirm}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700"
+              disabled={isCounting}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 disabled:opacity-60"
             >
               ✅ Confirm and Post to Blockchain
             </button>
@@ -119,6 +132,20 @@ const ConfirmBlockchainPost = () => {
               ❌ Cancel
             </button>
           </div>
+
+          {isCounting && (
+            <div className="w-full mt-6">
+              <div className="w-full bg-gray-300 h-4 rounded-full overflow-hidden shadow-inner">
+                <div
+                  className="h-full bg-blue-600 transition-all duration-700 ease-in-out"
+                  style={{ width: `${(counter / data.length) * 100}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-700 mt-2 text-center">
+                Processing {counter} of {data.length} records...
+              </p>
+            </div>
+          )}
         </>
       )}
     </div>

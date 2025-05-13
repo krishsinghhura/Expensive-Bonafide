@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 
 exports.registerUniversity = async (req, res) => {
   const { name, password, privateKey } = req.body;
+  console.log(req.body);
+  
 
   try {
     const existing = await University.findOne({ name });

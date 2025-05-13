@@ -1,117 +1,72 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { checkMerkleRoot } from '../utils/checkMerkleRoot';  // Import the checkMerkleRoot function
+import React, { useState } from "react";
+import axios from "axios";
 
-const VerifyAadhaar = () => {
-  const [aadhaar, setAadhaar] = useState('');
+export default function StudentVerifier() {
+  const [email, setEmail] = useState("");
   const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    setError('');
     setResult(null);
-    setIsLoading(true);
-
-    if (!aadhaar) {
-      setError('Please enter your Aadhaar number.');
-      setIsLoading(false);
-      return;
-    }
+    setError("");
 
     try {
-      
-      const response = await axios.post('http://localhost:4000/block/verify', { aadhaar });
-      console.log(response);
-      
-      const { student, merkleRoot } = response.data;
+      const response = await axios.post("http://localhost:4000/verify/verify", { email });
 
-      console.log(response.data.merkleRoot);
-      
-
-      if (!student) {
-        setError('Student not found or verification failed.');
-        setIsLoading(false);
-        return;
-      }
-
-      
-      const isMerkleRootValid = await checkMerkleRoot(merkleRoot);
-
-      
-      if (isMerkleRootValid) {
-        setResult({
-          status: 'Verified',
-          student: student,
-          storedMerkleRoot: merkleRoot,
-          blockchainValidity: 'Valid Merkle Root',
-        });
-      } else {
-        setResult({
-          status: 'Not Verified',
-          student: student,
-          storedMerkleRoot: merkleRoot,
-          blockchainValidity: 'Invalid Merkle Root',
-        });
+      if (response.status === 200) {
+        setResult(response.data);
       }
     } catch (err) {
-      console.error(err);
-      if (err.response) {
-        setError(err.response.data.message || err.response.data.error);
-      } else {
-        setError('Server error. Please try again.');
-      }
-    } finally {
-      setIsLoading(false);
+      console.error("Verification error:", err);
+      setError(err.response?.data?.error || "Something went wrong.");
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-16 p-6 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">Verify Aadhaar</h2>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+      <h2 className="text-2xl font-bold text-center mb-4 text-blue-700">Verify Student Blockchain Record</h2>
       
       <form onSubmit={handleVerify} className="flex flex-col gap-4">
         <input
-          type="text"
-          placeholder="Enter Aadhaar number"
-          value={aadhaar}
-          onChange={(e) => setAadhaar(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          type="email"
+          placeholder="Enter student email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-          disabled={isLoading}
+          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-200 font-semibold"
         >
-          {isLoading ? 'Verifying...' : 'Verify'}
+          Verify
         </button>
       </form>
 
-      {error && (
-        <p className="mt-4 text-red-600 text-center">{error}</p>
+      {result && (
+        <div className="mt-6 p-4 bg-green-100 border border-green-400 rounded-md text-green-800">
+          <h4 className="font-bold mb-2">Verification Successful</h4>
+          <p><span className="font-semibold">Email:</span> {result.email}</p>
+          <p>
+            <span className="font-semibold">Transaction Hash:</span> 
+            <a
+              href={`https://subnets-test.avax.network/c-chain/tx/${result.transactionHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-700"
+            >
+              {result.transactionHash}
+            </a>
+          </p>
+        </div>
       )}
 
-      {result && (
-        <div className="mt-6 p-4 bg-gray-100 rounded">
-          <h3 className="text-lg font-semibold mb-2 text-gray-700">
-            Status: <span className={result.status === 'Verified' ? 'text-green-600' : 'text-red-600'}>{result.status}</span>
-          </h3>
-          {result.student && (
-            <pre className="bg-white p-3 rounded text-sm overflow-auto">
-              {JSON.stringify(result.student, null, 2)}
-            </pre>
-          )}
-          <p className="mt-2">
-            <strong>Stored Merkle Root:</strong> {result.storedMerkleRoot}
-          </p>
-          <p className="mt-2">
-            <strong>Blockchain Merkle Root Validity:</strong> {result.blockchainValidity}
-          </p>
+      {error && (
+        <div className="mt-6 p-4 bg-red-100 border border-red-400 rounded-md text-red-700">
+          {error}
         </div>
       )}
     </div>
   );
-};
-
-export default VerifyAadhaar;
+}
