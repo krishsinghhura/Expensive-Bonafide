@@ -18,14 +18,12 @@ const Validator = () => {
 
   const validateRow = (row) => {
     const errors = [];
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.EMAIL)) errors.push("Invalid Email");
     if (!/^\d{12}$/.test(String(row["AADHAR NUMBER"]))) errors.push("AADHAR must be 12 digits");
     if (!/^\d{12}$/.test(String(row["REGISTRATION NUMBER"]))) errors.push("Reg No. must be 12 digits");
     if (!departments.includes(row.DEPARTMENT)) errors.push("Invalid Department");
     const cgpa = parseFloat(row.CGPA);
     if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) errors.push("CGPA must be between 0 and 10");
-
     return errors;
   };
 
@@ -109,48 +107,49 @@ const Validator = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 text-gray-800">
-      {/* Navbar */}
-      <Header/>      
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 text-gray-800">
+      <Header />
 
-      <main className="flex flex-col md:flex-row gap-10 mt-40 pt-24 px-6 sm:px-16">
-        {/* Info Panel */}
-        <div className="md:w-1/3 bg-white/40 backdrop-blur-sm shadow-md rounded-xl p-6">
-          <h2 className="text-2xl font-bold text-purple-700 mb-4">What are we doing?</h2>
-          <p className="text-gray-700 leading-relaxed">
+      {/* Hero Section */}
+      <section className="mt-20 px-6 sm:px-16 py-10 animate-fade-in-down">
+        <div className="max-w-3xl mx-auto bg-white/60 backdrop-blur-lg shadow-lg rounded-xl p-8">
+          <h2 className="text-4xl font-extrabold text-blue-700 mb-4">What are we doing?</h2>
+          <p className="text-gray-700 text-lg leading-relaxed">
             We are verifying student data uploaded through an Excel file. Each row is validated
             against rules like email format, AADHAR length, CGPA range, and valid department.
             Valid and invalid data are separated and visually shown. You can also push this
             validated data to the blockchain for permanent storage.
           </p>
         </div>
+      </section>
 
-        {/* Upload + Validation */}
-        <div className="md:w-2/3 bg-white/40 backdrop-blur-sm shadow-md rounded-xl p-8">
-          <h2 className="text-3xl font-extrabold text-purple-700 mb-6 text-center">
-             Data Validator
+      {/* Upload + Validation Section */}
+      <main className="flex flex-col md:flex-row gap-10 px-6 sm:px-16 mb-10 animate-fade-in-up">
+        <div className="md:w-full bg-white/50 backdrop-blur-sm shadow-md rounded-xl p-8">
+          <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center">
+            Data Validator
           </h2>
 
           <div className="mb-4">
-            <label htmlFor="file-upload" className="cursor-pointer block border-2 border-dashed border-purple-400 p-6 rounded-lg text-center hover:bg-purple-100 transition">
-              <FaFileUpload className="w-10 h-10 mx-auto text-purple-600" />
-              <p className="mt-2 text-purple-700 font-semibold">Click or Drag to Upload Excel File</p>
+            <label htmlFor="file-upload" className="cursor-pointer block border-2 border-dashed border-blue-400 p-6 rounded-lg text-center hover:bg-blue-100 transition">
+              <FaFileUpload className="w-10 h-10 mx-auto text-blue-600" />
+              <p className="mt-2 text-blue-700 font-semibold">Click or Drag to Upload Excel File</p>
             </label>
             <input id="file-upload" type="file" onChange={handleFileUpload} className="hidden" accept=".xlsx, .xls" />
           </div>
 
           <button
             onClick={PostingToBlockchain}
-            className="bg-purple-700 hover:bg-purple-800 text-white font-semibold py-2 px-4 rounded w-full mb-4"
+            className="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded w-full mb-4 transition"
           >
             <FaDatabase className="inline mr-2" /> Post to Blockchain
           </button>
 
           {loading && (
             <div>
-              <div className="text-purple-700 font-semibold">Validating Rows...</div>
-              <div className="w-full h-2 bg-purple-200 rounded">
-                <div style={{ width: `${progress}%` }} className="h-full bg-purple-700 rounded transition-all" />
+              <div className="text-blue-700 font-semibold">Validating Rows...</div>
+              <div className="w-full h-2 bg-blue-200 rounded">
+                <div style={{ width: `${progress}%` }} className="h-full bg-blue-700 rounded transition-all" />
               </div>
               <p className="text-sm mt-1 text-gray-600">{Math.floor(rows.length * (progress / 100))} / {rows.length} processed</p>
             </div>
@@ -214,15 +213,15 @@ const Validator = () => {
 
               <button
                 onClick={handleSave}
-                className="bg-purple-700 hover:bg-purple-800 text-white py-2 px-4 rounded mt-6 w-full"
+                className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded mt-6 w-full transition"
               >
                 <FaSave className="inline mr-2" /> Save to Redis
               </button>
             </>
           )}
         </div>
-         {/* Show card if Redis data exists */}
       </main>
+
       {savedData && (
         <div
           onClick={() => navigate("/edit-data")}
@@ -230,9 +229,7 @@ const Validator = () => {
         >
           <h3 className="text-xl font-semibold text-green-600">📦 Cached Data Found</h3>
           <p className="text-gray-600 mt-1">Click here to edit the cached data from Redis</p>
-          
         </div>
-        
       )}
     </div>
   );
