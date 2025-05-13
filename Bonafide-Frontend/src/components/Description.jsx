@@ -2,16 +2,19 @@ import React from 'react';
 
 const Summary = () => {
   return (
-    <section className="bg-white py-16">
+    <section className="bg-white py-20">
       <div className="max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-4xl font-bold text-indigo-600 mb-6">What We Do</h2>
-        <p className="text-gray-700 text-lg leading-relaxed">
-          Bonafide is a secure and modern platform for issuing, managing, and verifying digital credentials using blockchain technology. 
-          Our application empowers institutions and organizations to provide tamper-proof certificates, badges, and documents that are instantly verifiable and permanently stored.
+        <h2 className="text-5xl font-extrabold text-indigo-600 mb-8">What We Do</h2>
+        <p className="text-gray-800 text-xl leading-relaxed">
+          <span className="font-semibold text-indigo-500">Bonafide</span> is your trusted partner in the future of credentialing. 
+          We provide a secure, blockchain-powered platform to issue, manage, and verify digital certificates with absolute authenticity.
         </p>
-        <p className="text-gray-700 text-lg leading-relaxed mt-4">
-          Whether you're an educational institution, a corporate organization, or a certification body, 
-          Bonafide simplifies your credentialing process while ensuring transparency, trust, and technological excellence.
+        <p className="text-gray-800 text-xl leading-relaxed mt-6">
+          From universities to corporate bodies, we help organizations eliminate fraud, reduce paperwork, and build trust 
+          through verifiable, tamper-proof credentials — accessible anytime, anywhere.
+        </p>
+        <p className="text-gray-800 text-xl leading-relaxed mt-6">
+          Join the movement toward smarter, simpler, and more secure digital verification.
         </p>
       </div>
     </section>
