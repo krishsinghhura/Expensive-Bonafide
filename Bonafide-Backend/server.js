@@ -3,11 +3,20 @@ const app = require('./app');
 const cron = require('node-cron');
 const pushDataToMongo=require("./services/dataSyncService");
 const connectToMongoDB=require("./config/mongo");
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+app.use(cookieParser());
+
 
 require('dotenv').config();
 connectToMongoDB();
 
-cron.schedule('8 14 20 * * *', async () => {
+app.use(cors({
+  origin: 'http://localhost:5173', // your frontend origin
+  credentials: true,              // Allow cookies
+}));
+
+cron.schedule('* * * * *', async () => {
   console.log('🕒 Running scheduled job to push Redis data to Supabase...');
   await pushDataToMongo();
   console.log('📦 Pushing this data:', formatted);

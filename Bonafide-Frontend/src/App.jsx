@@ -5,6 +5,7 @@ import Confirmation from "./pages/Confirmartion";
 import VerifyAadhaar from "./pages/VerifyAadhaar";
 import Home from "./pages/Home";
 import UniversitySignIn from "./pages/UniversitySignIn";
+import AuthPage from "./pages/Auth";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/confirmation" element={<Confirmation/>} />
         <Route path="/verify-student" element={<VerifyAadhaar/>} />
         <Route path="/verify" element={<UniversitySignIn/>} />
+        <Route path="/auth" element={<AuthPage/>} />
       </Routes>
     </BrowserRouter>
   );

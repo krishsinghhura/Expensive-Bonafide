@@ -8,6 +8,7 @@ const studentSchema = new mongoose.Schema({
   department: { type: String, required: true },
   cgpa: { type: Number, required: true },
   blockchainTxnHash: { type: String, default: null },
+  UnivId:{type:mongoose.Schema.Types.ObjectId}
 }, { timestamps: true });
 
 module.exports = mongoose.model("Data", studentSchema);
