@@ -13,7 +13,7 @@ const CTA = () => (
         Join numerous organizations in securing and simplifying their digital credentials.
       </p>
       <a
-        href="#contact"
+        href="/auth"
         className="bg-white text-indigo-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition duration-300"
       >
         Get Started Now

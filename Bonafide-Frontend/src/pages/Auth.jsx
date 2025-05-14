@@ -10,9 +10,9 @@ export default function AuthPage() {
     password: "",
     privateKey: "",
   });
-  
-  const navigate=useNavigate();
-  
+
+  const navigate = useNavigate();
+
   const toggleForm = () => {
     setIsSignIn(!isSignIn);
     setFormData({ name: "", email: "", password: "", privateKey: "" });
@@ -29,10 +29,18 @@ export default function AuthPage() {
     e.preventDefault();
 
     if (isSignIn) {
-      const response = await axios.post("http://localhost:4000/api/university/login", {
+      try {
+        const response = await axios.post("http://localhost:4000/api/university/login", {
           email: formData.email,
-          password: formData.password,   
+          password: formData.password,
         });
+
+        alert("Login successful");
+        navigate("/");
+      } catch (error) {
+        alert("Login failed");
+        console.error(error);
+      }
     } else {
       try {
         const response = await axios.post("http://localhost:4000/api/university/register", {
@@ -43,7 +51,7 @@ export default function AuthPage() {
         });
 
         alert("Registered Successfully");
-        navigate("/")
+        navigate("/");
       } catch (error) {
         alert("Registration Failed");
         console.error(error);
@@ -52,8 +60,12 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 bg-opacity-30 backdrop-blur-xl">
+      <h1 className="text-4xl font-bold text-white mb-8 drop-shadow-lg animate-fade-in">
+        Get started with Us
+      </h1>
+
+      <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md border border-gray-200 transition-transform duration-500 hover:scale-105">
         <h2 className="text-2xl font-bold text-purple-700 mb-6 text-center">
           {isSignIn ? "Sign In" : "Sign Up"}
         </h2>
@@ -67,7 +79,7 @@ export default function AuthPage() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
                 placeholder="Enter your name"
               />
             </div>
@@ -80,7 +92,7 @@ export default function AuthPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
               placeholder="Enter your email"
             />
           </div>
@@ -92,26 +104,28 @@ export default function AuthPage() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
               placeholder="Enter your password"
             />
           </div>
 
-          <div className="mb-6">
-            <label className="block text-gray-700">Private Key</label>
-            <input
-              type="text"
-              name="privateKey"
-              value={formData.privateKey}
-              onChange={handleChange}
-              className="w-full px-4 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Enter your private key"
-            />
-          </div>
+          {!isSignIn && (
+            <div className="mb-6">
+              <label className="block text-gray-700">Private Key</label>
+              <input
+                type="text"
+                name="privateKey"
+                value={formData.privateKey}
+                onChange={handleChange}
+                className="w-full px-4 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
+                placeholder="Enter your private key"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
-            className="w-full bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700 transition"
+            className="w-full bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700 transition duration-300"
           >
             {isSignIn ? "Sign In" : "Sign Up"}
           </button>

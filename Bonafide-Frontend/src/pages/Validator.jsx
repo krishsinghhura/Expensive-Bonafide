@@ -20,6 +20,7 @@ const Validator = () => {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [savedData, setSavedData] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   const navigate = useNavigate();
 
@@ -77,11 +78,11 @@ const Validator = () => {
         body: JSON.stringify({ data: allData }),
       });
       const result = await response.json();
-      if (response.ok) alert("✅ Data successfully cached to Redis!");
-      else alert(`❌ Failed to save data: ${result.error}`);
+      if (response.ok) setAlert({ type: "success", message: "Data successfully cached to Redis!" });
+      else setAlert({ type: "error", message: `Failed to save data: ${result.error}` });
     } catch (error) {
       console.error("Error saving to backend:", error);
-      alert("❌ Something went wrong while saving data.");
+      setAlert({ type: "error", message: "Something went wrong while saving data." });
     }
   };
 
@@ -92,7 +93,7 @@ const Validator = () => {
       if (response.ok && result.data?.length > 0) setSavedData(result.data);
     } catch (err) {
       console.error(err);
-      alert("❌ Error fetching from Redis.");
+      setAlert({ type: "error", message: "Error fetching from Redis." });
     }
   };
 
@@ -103,8 +104,23 @@ const Validator = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800">
+<div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-500 via-purple-400 to-pink-500 text-gray-800 backdrop-blur-lg">
       <Header />
+      
+      {/* Alert Popup */}
+      {alert && (
+        <motion.div
+          className={`fixed top-4 right-4 p-4 rounded-md shadow-md max-w-xs w-full ${
+            alert.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          }`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <p>{alert.message}</p>
+        </motion.div>
+      )}
+
       <motion.section
         className="flex flex-col items-center justify-center text-center px-6 py-16"
         initial={{ opacity: 0, y: -50 }}

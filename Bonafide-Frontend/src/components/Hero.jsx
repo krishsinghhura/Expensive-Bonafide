@@ -10,7 +10,7 @@ const Hero = () => (
         Empower your organization with verifiable blockchain credentials.
       </p>
       <a
-        href="#get-started"
+        href="/auth"
         className="bg-white text-indigo-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 hover:scale-105 transition-transform duration-300"
       >
         Get Started
