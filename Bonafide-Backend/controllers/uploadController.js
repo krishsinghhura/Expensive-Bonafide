@@ -1,18 +1,29 @@
 // uploadController.js
 const redis = require('../redis/redisClient');
+const jwt = require('jsonwebtoken');
+
 
 const uploadData = async (req, res) => {
   try {
     const { data } = req.body;
     console.log(data);
-    
+    //Add the university id to the data too
 
+  
     if (!Array.isArray(data)) {
       return res.status(400).json({ error: 'Data must be an array of rows.' });
     }
 
+    const univId = req.user.id;
+    const univToken = jwt.sign({id : univId} , process.env.univKey);
+
+    const finalData = data.map(row => ({
+      ...row,
+      univ_token : univToken,
+    }))
+
     // Save to Redis with key 'excel_data'
-    await redis.set('excel_data', JSON.stringify(data), 'EX', 3600); // Expires in 1 hour
+    await redis.set('excel_data', JSON.stringify(finalData), 'EX', 3600); // Expires in 1 hour
 
     return res.status(200).json({ message: '✅ Data cached in Redis successfully!',data:JSON.stringify(data) });
   } catch (err) {

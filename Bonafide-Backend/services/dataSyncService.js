@@ -12,6 +12,7 @@ const pushDataToMongo = async () => {
     const data = JSON.parse(rawData);
 
     const formatted = data.map(row => ({
+      university : row.univ_token,
       name: row.NAME,
       email: row.EMAIL,
       aadhar_number: row["AADHAR NUMBER"],

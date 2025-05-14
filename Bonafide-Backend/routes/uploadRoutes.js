@@ -2,8 +2,9 @@
 const express = require('express');
 const router = express.Router();
 const { uploadData,getDataFromRedis} = require('../controllers/uploadController');
+const univMiddleware = require('../middleware/univMiddleware');
 
-router.post('/upload', uploadData);
+router.post('/upload', univMiddleware ,  uploadData);
 
 router.get('/fetch', getDataFromRedis);
 
