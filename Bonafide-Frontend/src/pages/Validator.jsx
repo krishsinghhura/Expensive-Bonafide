@@ -120,53 +120,76 @@ const Validator = () => {
         </motion.div>
       )}
 
-      <main className="flex flex-col items-center px-6 sm:px-16">
-        <motion.div
-          className="w-full max-w-6xl grid md:grid-cols-2 gap-8 bg-white/60 backdrop-blur-md shadow-md rounded-xl p-8 mb-10"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.8 }}
-        >
-          <div>
-            <h2 className="text-3xl font-bold text-blue-700 mb-4">Validation Guide</h2>
-            <ul className="list-disc list-inside text-gray-700 mb-4">
-              <li>Upload the Excel file.</li>
-              <li>System will validate each row (Email, AADHAR, etc).</li>
-              <li>View valid and invalid data separately.</li>
-              <li>Push validated data to blockchain or save to Redis.</li>
+      <main className="h-full min-h-[600px] sm:backdrop-blur flex flex-col items-center px-6 sm:px-16 mt-21">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          {/* LEFT HALF: Guide + Do's & Don'ts */}
+          <div className="bg-white rounded-2xl shadow-md p-8 h-full">
+            <h2 className="text-3xl font-bold text-blue-700 mb-4">How to Validate?</h2>
+            <ul className="list-disc list-inside text-gray-800 space-y-2 mb-6">
+              <li>Prepare an Excel file with all student data.</li>
+              <li>Ensure headers like EMAIL, CGPA, DEPARTMENT, etc., are present.</li>
+              <li>CGPA must be between 0 and 10.</li>
+              <li>Email format must be valid.</li>
+              <li>AADHAR and Reg. No. must have 12 digits.</li>
+              <li>DEPARTMENT must be valid.</li>
             </ul>
-            <h3 className="text-xl font-semibold text-blue-600 mb-2">✅ Do's</h3>
-            <ul className="list-disc list-inside text-green-700">
-              <li>Use correct formats for each column.</li>
-              <li>Verify department names match the list.</li>
+
+            <h3 className="text-2xl font-semibold text-purple-700 mt-6 mb-3">Do's ✅</h3>
+            <ul className="list-disc list-inside text-green-700 space-y-1">
+              <li>Check headers before uploading.</li>
+              <li>Use .xlsx or .xls format only.</li>
+              <li>Check CGPA and department fields.</li>
             </ul>
-            <h3 className="text-xl font-semibold text-red-600 mt-4 mb-2">❌ Don'ts</h3>
-            <ul className="list-disc list-inside text-red-700">
-              <li>Don’t leave required fields empty.</li>
-              <li>Don’t use unsupported Excel formats.</li>
+
+            <h3 className="text-2xl font-semibold text-red-700 mt-6 mb-3">Don'ts ❌</h3>
+            <ul className="list-disc list-inside text-red-600 space-y-1">
+              <li>Don't include extra spaces in headers.</li>
+              <li>Don't use merged cells.</li>
+              <li>Don't upload PDFs or CSVs.</li>
             </ul>
           </div>
 
-          <div>
-            <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center">
-              What are we doing?
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-6">
-              We are verifying student data uploaded through an Excel file. Each row is validated
-              against rules like email format, AADHAR length, CGPA range, and valid department.
-              Valid and invalid data are separated and visually shown. You can also push this
-              validated data to the blockchain for permanent storage.
-            </p>
-
-            <label htmlFor="file-upload" className="cursor-pointer block border-2 border-dashed border-blue-400 p-6 rounded-lg text-center hover:bg-blue-100 transition">
-              <FaFileUpload className="w-10 h-10 mx-auto text-blue-600" />
-              <p className="mt-2 text-blue-700 font-semibold">
-                Click or Drag to Upload Excel File
+          {/* RIGHT HALF: Description + Upload */}
+          <div className="bg-white rounded-2xl shadow-md p-8 h-full flex flex-col justify-between space-y-6">
+            {/* What are we doing? */}
+            <div>
+              <h2 className="text-3xl font-bold text-blue-700 mb-3">What are we doing?</h2>
+              <p className="text-gray-700 leading-relaxed">
+                We are verifying student data uploaded through an Excel file. Each row is validated
+                against rules like email format, AADHAR length, CGPA range, and valid department.
+                Valid and invalid data are separated visually. You can also push validated data to the blockchain.
               </p>
-            </label>
-            <input id="file-upload" type="file" onChange={handleFileUpload} className="hidden" accept=".xlsx, .xls" />
-          </div>
-        </motion.div>
+            </div>
+
+    {/* File Upload */}
+    <div>
+      <label
+        htmlFor="file-upload"
+        className="cursor-pointer block border-2 border-dashed border-blue-400 p-6 rounded-lg text-center hover:bg-blue-100 transition"
+      >
+        <FaFileUpload className="w-10 h-10 mx-auto text-blue-600" />
+        <p className="mt-2 text-blue-700 font-semibold">Click or Drag to Upload Excel File</p>
+      </label>
+      <input
+        id="file-upload"
+        type="file"
+        onChange={handleFileUpload}
+        className="hidden"
+        accept=".xlsx, .xls"
+      />
+    </div>
+     <button
+              onClick={(e) => {
+                e.stopPropagation();
+                PostingToBlockchain();
+              }}
+              className="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded w-full mb-21"
+            >
+              <FaDatabase className="inline mr-2" /> Post to Blockchain
+            </button>
+  </div>
+</div>
+
 
         {loading && (
           <div className="w-full max-w-4xl mb-10">
