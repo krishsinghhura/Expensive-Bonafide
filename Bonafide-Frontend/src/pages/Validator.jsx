@@ -104,13 +104,12 @@ const Validator = () => {
   }, []);
 
   return (
-<div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-500 via-purple-400 to-pink-500 text-gray-800 backdrop-blur-lg">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-500 via-purple-400 to-pink-500 text-gray-800 backdrop-blur-lg">
       <Header />
-      
-      {/* Alert Popup */}
+
       {alert && (
         <motion.div
-          className={`fixed top-4 right-4 p-4 rounded-md shadow-md max-w-xs w-full ${
+          className={`fixed top-4 right-4 p-4 rounded-md shadow-md max-w-xs w-full z-50 ${
             alert.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
           }`}
           initial={{ opacity: 0 }}
@@ -121,158 +120,155 @@ const Validator = () => {
         </motion.div>
       )}
 
-      <motion.section
-        className="flex flex-col items-center justify-center text-center px-6 py-16"
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        <div className="max-w-3xl bg-white/60 backdrop-blur-md rounded-xl shadow-lg p-8">
-          <h2 className="text-3xl font-bold text-blue-700 mb-4">What are we doing?</h2>
-          <p className="text-gray-700 leading-relaxed">
-            We are verifying student data uploaded through an Excel file. Each row is validated
-            against rules like email format, AADHAR length, CGPA range, and valid department.
-            Valid and invalid data are separated and visually shown. You can also push this
-            validated data to the blockchain for permanent storage.
-          </p>
-        </div>
-      </motion.section>
-
       <main className="flex flex-col items-center px-6 sm:px-16">
         <motion.div
-          className="w-full max-w-4xl bg-white/60 backdrop-blur-md shadow-md rounded-xl p-8 mb-10"
+          className="w-full max-w-6xl grid md:grid-cols-2 gap-8 bg-white/60 backdrop-blur-md shadow-md rounded-xl p-8 mb-10"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
         >
-          <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center">
-            Data Validator
-          </h2>
+          <div>
+            <h2 className="text-3xl font-bold text-blue-700 mb-4">Validation Guide</h2>
+            <ul className="list-disc list-inside text-gray-700 mb-4">
+              <li>Upload the Excel file.</li>
+              <li>System will validate each row (Email, AADHAR, etc).</li>
+              <li>View valid and invalid data separately.</li>
+              <li>Push validated data to blockchain or save to Redis.</li>
+            </ul>
+            <h3 className="text-xl font-semibold text-blue-600 mb-2">✅ Do's</h3>
+            <ul className="list-disc list-inside text-green-700">
+              <li>Use correct formats for each column.</li>
+              <li>Verify department names match the list.</li>
+            </ul>
+            <h3 className="text-xl font-semibold text-red-600 mt-4 mb-2">❌ Don'ts</h3>
+            <ul className="list-disc list-inside text-red-700">
+              <li>Don’t leave required fields empty.</li>
+              <li>Don’t use unsupported Excel formats.</li>
+            </ul>
+          </div>
 
-          <div className="mb-4">
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer block border-2 border-dashed border-blue-400 p-6 rounded-lg text-center hover:bg-blue-100 transition"
-            >
+          <div>
+            <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center">
+              What are we doing?
+            </h2>
+            <p className="text-gray-700 leading-relaxed mb-6">
+              We are verifying student data uploaded through an Excel file. Each row is validated
+              against rules like email format, AADHAR length, CGPA range, and valid department.
+              Valid and invalid data are separated and visually shown. You can also push this
+              validated data to the blockchain for permanent storage.
+            </p>
+
+            <label htmlFor="file-upload" className="cursor-pointer block border-2 border-dashed border-blue-400 p-6 rounded-lg text-center hover:bg-blue-100 transition">
               <FaFileUpload className="w-10 h-10 mx-auto text-blue-600" />
               <p className="mt-2 text-blue-700 font-semibold">
                 Click or Drag to Upload Excel File
               </p>
             </label>
-            <input
-              id="file-upload"
-              type="file"
-              onChange={handleFileUpload}
-              className="hidden"
-              accept=".xlsx, .xls"
-            />
+            <input id="file-upload" type="file" onChange={handleFileUpload} className="hidden" accept=".xlsx, .xls" />
           </div>
+        </motion.div>
 
-          <button
-            onClick={PostingToBlockchain}
-            className="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded w-full mb-4"
-          >
-            <FaDatabase className="inline mr-2" /> Post to Blockchain
-          </button>
-
-          {loading && (
-            <div>
-              <div className="text-blue-700 font-semibold">Validating Rows...</div>
-              <div className="w-full h-2 bg-blue-200 rounded">
-                <div
-                  style={{ width: `${progress}%` }}
-                  className="h-full bg-blue-700 rounded transition-all"
-                />
-              </div>
-              <p className="text-sm mt-1 text-gray-600">
-                {Math.floor(rows.length * (progress / 100))} / {rows.length} processed
-              </p>
+        {loading && (
+          <div className="w-full max-w-4xl mb-10">
+            <div className="text-blue-700 font-semibold">Validating Rows...</div>
+            <div className="w-full h-2 bg-blue-200 rounded">
+              <div style={{ width: `${progress}%` }} className="h-full bg-blue-700 rounded transition-all" />
             </div>
-          )}
+            <p className="text-sm mt-1 text-gray-600">
+              {Math.floor(rows.length * (progress / 100))} / {rows.length} processed
+            </p>
+          </div>
+        )}
 
-          {!loading && (validRows.length > 0 || invalidRows.length > 0) && (
-            <>
-              <details open className="mt-6">
-                <summary className="text-lg font-bold text-green-700 cursor-pointer">
-                  <FaCheckCircle className="inline mr-2" /> Valid Data ({validRows.length})
-                </summary>
-                <div className="overflow-x-auto mt-2">
-                  <table className="min-w-full bg-white rounded">
-                    <thead>
-                      <tr>
-                        {Object.keys(validRows[0] || {}).map((key) => (
-                          <th key={key} className="px-4 py-2 border">{key}</th>
+        {!loading && (validRows.length > 0 || invalidRows.length > 0) && (
+          <motion.div className="w-full max-w-4xl bg-white/60 backdrop-blur-md shadow-md rounded-xl p-8 mb-10">
+            <h2 className="text-3xl font-bold text-blue-700 mb-4 text-center">Validation Results</h2>
+            <details open className="mt-6">
+              <summary className="text-lg font-bold text-green-700 cursor-pointer">
+                <FaCheckCircle className="inline mr-2" /> Valid Data ({validRows.length})
+              </summary>
+              <div className="overflow-x-auto mt-2">
+                <table className="min-w-full bg-white rounded">
+                  <thead>
+                    <tr>
+                      {Object.keys(validRows[0] || {}).map((key) => (
+                        <th key={key} className="px-4 py-2 border">{key}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {validRows.map((row, i) => (
+                      <tr key={i} className="hover:bg-gray-100">
+                        {Object.values(row).map((val, idx) => (
+                          <td key={idx} className="px-4 py-2 border">{val}</td>
                         ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {validRows.map((row, i) => (
-                        <tr key={i} className="hover:bg-gray-100">
-                          {Object.values(row).map((val, idx) => (
-                            <td key={idx} className="px-4 py-2 border">{val}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </details>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
 
-              <details className="mt-6">
-                <summary className="text-lg font-bold text-red-700 cursor-pointer">
-                  <FaTimesCircle className="inline mr-2" /> Invalid Data ({invalidRows.length})
-                </summary>
-                <div className="overflow-x-auto mt-2">
-                  <table className="min-w-full bg-white rounded">
-                    <thead>
-                      <tr>
-                        {Object.keys(invalidRows[0] || {}).map((key) => (
-                          <th key={key} className="px-4 py-2 border">{key}</th>
+            <details className="mt-6">
+              <summary className="text-lg font-bold text-red-700 cursor-pointer">
+                <FaTimesCircle className="inline mr-2" /> Invalid Data ({invalidRows.length})
+              </summary>
+              <div className="overflow-x-auto mt-2">
+                <table className="min-w-full bg-white rounded">
+                  <thead>
+                    <tr>
+                      {Object.keys(invalidRows[0] || {}).map((key) => (
+                        <th key={key} className="px-4 py-2 border">{key}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invalidRows.map((row, i) => (
+                      <tr key={i} className="hover:bg-red-50">
+                        {Object.entries(row).map(([key, val], idx) => (
+                          <td key={idx} className="px-4 py-2 border">
+                            {key === "errors" ? (
+                              <span className="text-red-500">{val.join(", ")}</span>
+                            ) : (
+                              val
+                            )}
+                          </td>
                         ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {invalidRows.map((row, i) => (
-                        <tr key={i} className="hover:bg-red-50">
-                          {Object.entries(row).map(([key, val], idx) => (
-                            <td key={idx} className="px-4 py-2 border">
-                              {key === "errors" ? (
-                                <span className="text-red-500">{val.join(", ")}</span>
-                              ) : (
-                                val
-                              )}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </details>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
 
-              <button
-                onClick={handleSave}
-                className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded mt-6 w-full"
-              >
-                <FaSave className="inline mr-2" /> Save to Redis
-              </button>
-            </>
-          )}
-        </motion.div>
+            <button onClick={handleSave} className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded mt-6 w-full">
+              <FaSave className="inline mr-2" /> Save to Redis
+            </button>
+          </motion.div>
+        )}
+
+        {savedData && (
+          <motion.div
+            onClick={() => navigate("/edit-data")}
+            className="cursor-pointer w-full max-w-md bg-white border border-green-400 rounded-lg p-4 shadow-lg mb-10 hover:bg-green-50 transition"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+          >
+            <h3 className="text-lg font-bold text-green-600 mb-2">📦 Cached Data Found</h3>
+            <p className="text-sm text-gray-600 mb-4">Click here to edit the cached data from Redis</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                PostingToBlockchain();
+              }}
+              className="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded w-full"
+            >
+              <FaDatabase className="inline mr-2" /> Post to Blockchain
+            </button>
+          </motion.div>
+        )}
       </main>
-
-      {savedData && (
-        <motion.div
-          onClick={() => navigate("/edit-data")}
-          className="cursor-pointer mb-6 p-4 rounded-lg shadow-lg mt-10 bg-white border-l-4 border-green-500 hover:bg-green-50 transition"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-        >
-          <h3 className="text-xl font-semibold text-green-600">📦 Cached Data Found</h3>
-          <p className="text-gray-600 mt-1">Click here to edit the cached data from Redis</p>
-        </motion.div>
-      )}
     </div>
   );
 };
