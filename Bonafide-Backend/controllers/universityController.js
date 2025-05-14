@@ -3,9 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.registerUniversity = async (req, res) => {
-  const { email,name, password, privateKey } = req.body;
-  console.log(req.body);
-  
+  const { email,name, password, privateKey } = req.body;  
 
   try {
     const existing = await University.findOne({ email });
@@ -19,19 +17,18 @@ exports.registerUniversity = async (req, res) => {
       password: hashedPassword,
       privateKey
     });
-
-    const token = jwt.sign({ id: university._id }, process.env.JWT_SECRET, {
+    
+    const token = jwt.sign({ id: university._id }, "supersecretkey", {
       expiresIn: '1d',
     });
-
+    
     res.cookie('token', token, {
       httpOnly: true,
       secure: false, // Set to true in production
       maxAge: 24 * 60 * 60 * 1000,
     });
-    console.log('Cookies received:', req.cookies);
 
-    res.status(201).json({ msg: 'University registered and authenticated' });
+    res.status(201).json({ msg: 'University registered and authenticated',token });
   } catch (err) {
     res.status(500).json({ msg: 'Server error' });
   }

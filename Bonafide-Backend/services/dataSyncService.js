@@ -1,5 +1,6 @@
 const redis = require('../redis/redisClient');
 const Data = require('../model/data');
+const University = require('../model/University');
 
 const pushDataToMongo = async () => {
   try {
@@ -10,8 +11,10 @@ const pushDataToMongo = async () => {
     }
 
     const data = JSON.parse(rawData);
+    console.log(rawData);
 
     const formatted = data.map(row => ({
+      university : row.univ_id,
       name: row.NAME,
       email: row.EMAIL,
       aadhar_number: row["AADHAR NUMBER"],

@@ -74,7 +74,8 @@ const Validator = () => {
     try {
       const response = await fetch("http://localhost:4000/api/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: { "Content-Type": "application/json"},
         body: JSON.stringify({ data: allData }),
       });
       const result = await response.json();

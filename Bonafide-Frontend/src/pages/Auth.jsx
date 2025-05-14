@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Cookies from 'js-cookie';
+
 
 export default function AuthPage() {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -33,7 +35,7 @@ export default function AuthPage() {
         const response = await axios.post("http://localhost:4000/api/university/login", {
           email: formData.email,
           password: formData.password,
-        });
+        })
 
         alert("Login successful");
         navigate("/");
