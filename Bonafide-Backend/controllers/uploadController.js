@@ -1,4 +1,5 @@
 // uploadController.js
+const University = require('../model/University');
 const redis = require('../redis/redisClient');
 const jwt = require('jsonwebtoken');
 
@@ -15,7 +16,10 @@ const uploadData = async (req, res) => {
     }
 
     const univId = req.user.id;
-    const univToken = jwt.sign({id : univId} , process.env.univKey);
+    const univ = University.findOne({
+      _id : univId,
+    })
+    const univToken = jwt.sign({id : univId} , univ.name);
 
     const finalData = data.map(row => ({
       ...row,
