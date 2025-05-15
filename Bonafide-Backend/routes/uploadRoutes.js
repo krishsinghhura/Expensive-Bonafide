@@ -6,6 +6,7 @@ const univMiddleware=require("../middleware/middleware");
 
 router.post('/upload',univMiddleware,uploadData);
 
-router.get('/fetch',getDataFromRedis);
+
+router.get('/fetch',univMiddleware,getDataFromRedis);
 
 module.exports = router;

@@ -36,7 +36,7 @@ export default function AuthPage() {
           email: formData.email,
           password: formData.password,
         })
-
+        Cookies.set("token",response.data.token)
         alert("Login successful");
         navigate("/");
       } catch (error) {
@@ -51,6 +51,8 @@ export default function AuthPage() {
           password: formData.password,
           privateKey: formData.privateKey,
         });
+
+        Cookies.set("token",response.data.token)
 
         alert("Registered Successfully");
         navigate("/");

@@ -6,6 +6,7 @@ const blockRoutes=require("./routes/emaiRoutes")
 const universityRoutes = require('./routes/universityRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const verifyRoutes = require('./routes/verifyRoutes');
+const GetData = require('./routes/dataRoutes')
 const cookieParser = require('cookie-parser');
 
 const app = express();
@@ -22,6 +23,7 @@ app.use('/api', uploadRoutes); // API prefix
 
 app.use("/block",blockRoutes)
 app.use('/verify' , verifyRoutes);
+app.use('/get-data' , GetData);
 
 
 app.use('/api/university', universityRoutes);

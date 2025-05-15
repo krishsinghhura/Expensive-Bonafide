@@ -10,7 +10,7 @@ connectToMongoDB();
 
 
 
-cron.schedule('* * * * *', async () => {
+cron.schedule('8 14 20 * * *', async () => {
   console.log('🕒 Running scheduled job to push Redis data to Supabase...');
   await pushDataToMongo();
   console.log('📦 Pushing this data:', formatted);

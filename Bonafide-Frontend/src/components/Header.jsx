@@ -33,6 +33,12 @@ const Header = () => (
         >
           Contact
         </a>
+        <a
+          href="/data"
+          className="bg-indigo-600 text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-indigo-700 hover:scale-105 transition-transform duration-300"
+        >
+          Your Data
+        </a>
       </nav>
     </div>
   </header>

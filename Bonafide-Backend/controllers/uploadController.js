@@ -38,6 +38,9 @@ const getDataFromRedis = async (req, res) => {
   try {
     const data = await redis.get("excel_data");
 
+    const univId = req.user.id;
+    console.log("univId is ",univId);
+    
     res.json({ data: JSON.parse(data || '[]') });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch from Redis' });

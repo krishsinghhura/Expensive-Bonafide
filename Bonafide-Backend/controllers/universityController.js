@@ -54,7 +54,7 @@ exports.loginUniversity = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ msg: 'University logged in successfully' });
+    res.status(200).json({ msg: 'University logged in successfully',token });
   } catch (err) {
     res.status(500).json({ msg: 'Server error' });
   }
