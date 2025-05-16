@@ -4,6 +4,8 @@ const studentSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   claimed: { type: Boolean},
+  walletAddress:{type:String},
+  CertificateUrl:{type:String},
   aadhar_number: { type: String,default: null},
   registration_number: { type: String,default: null },
   department: { type: String,default: null},

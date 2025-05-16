@@ -4,10 +4,12 @@ const Data = require("../model/data");
 const getDataForUser = async (req, res) => {
   try {
     const univId = req.user.id;
+    console.log(univId);
+    
 
     const data = await Data.find({ university: new mongoose.Types.ObjectId(univId) });
-
-
+    console.log(data.json());
+    
     res.json(data);
   } catch (err) {
     console.error("Error fetching data:", err);

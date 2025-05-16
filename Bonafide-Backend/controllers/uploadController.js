@@ -14,7 +14,7 @@ const uploadData = async (req, res) => {
     }
 
     const univId = req.user.id;
-
+    console.log("While uplaoding data to mongo ",univId);
 
     const finalData = data.map(row => ({
       ...row,
