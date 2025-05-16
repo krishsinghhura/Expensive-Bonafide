@@ -1,0 +1,9 @@
+creation of wallet
+
+change the student Model:=
+
+=> Add wallet created or not then only we can push to the claming thing, 
+
+=> student claim(make a button which will just send a mail for now)[afterwards we will connect o the user wallet and send him thee soul bound token]
+
+=> make a dashboard for university which will show how many transaction has been done and also show the data who have clamied or not
