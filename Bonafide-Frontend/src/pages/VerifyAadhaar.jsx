@@ -23,6 +23,7 @@ export default function StudentVerifier() {
   const [verificationStep, setVerificationStep] = useState(0);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState("");
+  const [pendingResult, setPendingResult] = useState(null);
 
   const verificationSteps = [
     { label: "Checking credential revocation status", emoji: "🔍" },
@@ -42,11 +43,20 @@ export default function StudentVerifier() {
         } else {
           clearInterval(interval);
           setIsVerifying(false);
+
+          // Delay briefly before showing final result
+          setTimeout(() => {
+            if (pendingResult) {
+              setResult(pendingResult);
+              setPendingResult(null);
+              setIsDialogOpen(false);
+            }
+          }, 700);
         }
       }, 1500);
       return () => clearInterval(interval);
     }
-  }, [isVerifying]);
+  }, [isVerifying,pendingResult]);
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -55,12 +65,12 @@ export default function StudentVerifier() {
     setError("");
     setVerificationError("");
     setResult(null);
+    setPendingResult(null);
 
     try {
       const response = await axios.post("http://localhost:4000/verify/verify", { email });
       if (response.status === 200) {
-        setResult(response.data);
-        setIsDialogOpen(false);
+        setPendingResult(response.data); // Wait until animation ends
       }
     } catch (err) {
       console.error("Verification error:", err);
@@ -83,7 +93,7 @@ export default function StudentVerifier() {
           >
             <div className="mb-8">
               <img
-                src="https://source.unsplash.com/800x400/?certificate"
+                src="https://drive.google.com/uc?id=1rjxVu78Yul82f_TVKJhDLBIctjpO50MT"
                 alt="Certificate"
                 className="w-full h-64 object-cover rounded-lg"
               />
@@ -149,7 +159,7 @@ export default function StudentVerifier() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg- bg-backdrop-blur pacity-50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-backdrop-blur bg-opacity-50 flex items-center justify-center z-50"
             >
               <motion.div
                 initial={{ scale: 0.5 }}
