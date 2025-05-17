@@ -8,6 +8,7 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const supabase = require("../config/supabse");
 const Student = require("../model/Student");
+const { log } = require("console");
 
 
 require("dotenv").config(); // Initialize Ethereum provider and signer
@@ -45,20 +46,15 @@ const pushDataToBlockchain = async (EMAIL) => {
 
     console.log("✅ Transaction successful with hash:", receipt.hash);
 
-    // Update MongoDB with the transaction hash
-    const updated = await Data.findOneAndUpdate(
-      { email: EMAIL },
-      { blockchainTxnHash: receipt.hash },
-      { new: true }
-    );
+    const dataFromRedis = await fetchDataFromRedis();
+    if (!dataFromRedis) throw new Error('No data found in redis');
+
+    const students = JSON.parse(dataFromRedis);
+    const updated = students.map((s) => s.email == EMAIL);
 
     if (!updated) {
-      console.warn(
-        `⚠️ No student found with email ${EMAIL} to update with txn hash.`
-      );
+      console.warn(`⚠️ Email ${EMAIL} not found in Redis.`);
       return;
-    } else {
-      console.log(`📝 Transaction hash saved to DB for ${EMAIL}`);
     }
 
     // Generate certificate with student data
@@ -102,11 +98,33 @@ const pushDataToBlockchain = async (EMAIL) => {
     }
 
     const certURL = publicUrlData.publicUrl;
-    await Student.findOneAndUpdate(
+
+    let studentRecord = await Student.findOne(
       { email: EMAIL },
-      { CertificateUrl: certURL },
-      { new: true }
     );
+
+    if (!studentRecord) {
+      console.log("Data not pushed to db yet , moving to redis");
+
+      const updatedStudent = students.map((s) => s.email == EMAIL ? {
+        ...s,
+        blockchainTxnHash: receipt.hash,
+        CertificateUrl: certURL
+      } : {
+        s
+      })
+      await redis.set("excel_data", JSON.stringify(updatedStudent));
+    }
+    else {
+      await Student.findOneAndUpdate(
+        { email: EMAIL },
+        { blockchainTxnHash: receipt.hash },
+        { CertificateUrl: certURL }
+      );
+
+      console.log("updated data saved to db" );
+    }
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
