@@ -4,7 +4,10 @@ import Editdata from "./pages/EditData";
 import Confirmation from "./pages/Confirmartion";
 import VerifyAadhaar from "./pages/VerifyAadhaar";
 import Home from "./pages/Home";
-import UniversitySignIn from "./pages/UniversitySignIn";
+import AuthPage from "./pages/Auth";
+import Contact from "./pages/Contact"
+import DepartmentStudentViewer from "./pages/Data";
+import StudentDashboard from "./pages/StudentDashboard";
 
 function App() {
   return (
@@ -15,7 +18,10 @@ function App() {
         <Route path="/edit-data" element={<Editdata />} />
         <Route path="/confirmation" element={<Confirmation/>} />
         <Route path="/verify-student" element={<VerifyAadhaar/>} />
-        <Route path="/verify" element={<UniversitySignIn/>} />
+        <Route path="/auth" element={<AuthPage/>} />
+        <Route path="/contact" element={<Contact/>} />
+        <Route path="/data" element={<DepartmentStudentViewer/>} />
+        <Route path="/student-dashboard" element={<StudentDashboard />} />
       </Routes>
     </BrowserRouter>
   );

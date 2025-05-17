@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const University = require("./University");
+const University=require("./University")
+
 
 const studentSchema = new mongoose.Schema({
   university : {type : mongoose.Schema.Types.ObjectId , ref : University},

@@ -4,8 +4,8 @@ const router = express.Router();
 const { uploadData,getDataFromRedis} = require('../controllers/uploadController');
 const univMiddleware = require('../middleware/univMiddleware');
 
-router.post('/upload', univMiddleware ,  uploadData);
+router.post('/upload', uploadData);
 
-router.get('/fetch', getDataFromRedis);
+router.get('/fetch',univMiddleware,getDataFromRedis);
 
 module.exports = router;

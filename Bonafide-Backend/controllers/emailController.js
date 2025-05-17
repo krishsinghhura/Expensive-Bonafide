@@ -95,5 +95,4 @@ const syncDataToBlockchain = async (req, res) => {
 
 module.exports = {
   syncDataToBlockchain,
-  claimCertificate,
 };

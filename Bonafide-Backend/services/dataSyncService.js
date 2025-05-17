@@ -1,5 +1,6 @@
 const redis = require('../redis/redisClient');
 const Data = require('../model/data');
+const University = require('../model/University');
 
 const pushDataToMongo = async () => {
   try {
@@ -12,7 +13,6 @@ const pushDataToMongo = async () => {
     const data = JSON.parse(rawData);
 
     const formatted = data.map(row => ({
-      university : row.univ_token,
       name: row.NAME,
       email: row.EMAIL,
       aadhar_number: row["AADHAR NUMBER"],
@@ -23,6 +23,9 @@ const pushDataToMongo = async () => {
 
     await Data.insertMany(formatted);
     console.log('✅ Data successfully pushed to MongoDB!');
+
+    await redis.del('excel_data');
+    console.log('🗑️ Redis data deleted after successful push.');
   } catch (err) {
     console.error('❌ Failed to push Redis data to MongoDB:', err);
   }

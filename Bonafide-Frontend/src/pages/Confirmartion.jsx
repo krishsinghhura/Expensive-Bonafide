@@ -11,7 +11,10 @@ const ConfirmBlockchainPost = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/fetch");
+      const response = await fetch("http://localhost:4000/api/fetch", {
+        method: "GET",
+        credentials: "include", // <== this is necessary
+      });
       const result = await response.json();
 
       if (response.ok && result.data) {
@@ -40,7 +43,7 @@ const ConfirmBlockchainPost = () => {
         clearInterval(interval);
         setIsCounting(false);
       }
-    }, 11000); 
+    }, 11000);
 
     try {
       const response = await fetch("http://localhost:4000/block/upload-email", {
@@ -98,7 +101,9 @@ const ConfirmBlockchainPost = () => {
               <thead className="bg-gray-200 sticky top-0">
                 <tr>
                   {Object.keys(data[0] || {}).map((key) => (
-                    <th key={key} className="border p-2">{key}</th>
+                    <th key={key} className="border p-2">
+                      {key}
+                    </th>
                   ))}
                 </tr>
               </thead>
