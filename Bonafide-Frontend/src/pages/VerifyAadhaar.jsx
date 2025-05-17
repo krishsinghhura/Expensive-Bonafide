@@ -14,6 +14,7 @@ import {
 } from "react-share";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ClaimNFTButton from "../components/ClaimButton";
 
 export default function StudentVerifier() {
   const [email, setEmail] = useState("");
@@ -23,6 +24,8 @@ export default function StudentVerifier() {
   const [verificationStep, setVerificationStep] = useState(0);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState("");
+  const [pendingResult, setPendingResult] = useState(null);
+  const [certificateUrl, setCertificateUrl] = useState("");
 
   const verificationSteps = [
     { label: "Checking credential revocation status", emoji: "🔍" },
@@ -42,11 +45,31 @@ export default function StudentVerifier() {
         } else {
           clearInterval(interval);
           setIsVerifying(false);
+
+          setTimeout(async () => {
+            if (pendingResult) {
+              setResult(pendingResult);
+              setPendingResult(null);
+              setIsDialogOpen(false);
+
+              // Fetch certificate after verification animation ends
+              try {
+                const certRes = await axios.get(
+                  `http://localhost:4000/verify/get-certificate?email=${email}`
+                );
+                if (certRes.status === 200) {
+                  setCertificateUrl(certRes.data.certificateUrl);
+                }
+              } catch (err) {
+                console.error("Certificate fetch error:", err);
+              }
+            }
+          }, 700);
         }
       }, 1500);
       return () => clearInterval(interval);
     }
-  }, [isVerifying]);
+  }, [isVerifying, pendingResult, email]);
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -55,12 +78,16 @@ export default function StudentVerifier() {
     setError("");
     setVerificationError("");
     setResult(null);
+    setPendingResult(null);
+    setCertificateUrl("");
 
     try {
-      const response = await axios.post("http://localhost:4000/verify/verify", { email });
+      const response = await axios.post(
+        "http://localhost:4000/verify/verify",
+        { email }
+      );
       if (response.status === 200) {
-        setResult(response.data);
-        setIsDialogOpen(false);
+        setPendingResult(response.data);
       }
     } catch (err) {
       console.error("Verification error:", err);
@@ -83,7 +110,10 @@ export default function StudentVerifier() {
           >
             <div className="mb-8">
               <img
-                src="https://source.unsplash.com/800x400/?certificate"
+                src={
+                  certificateUrl ||
+                  "https://via.placeholder.com/800x300.png?text=Certificate+Preview"
+                }
                 alt="Certificate"
                 className="w-full h-64 object-cover rounded-lg"
               />
@@ -91,10 +121,16 @@ export default function StudentVerifier() {
 
             {result && (
               <div className="space-y-6">
-                <h3 className="text-2xl font-bold text-purple-700">Credential Details</h3>
+                <h3 className="text-2xl font-bold text-purple-700">
+                  Credential Details
+                </h3>
                 <div className="space-y-4">
                   <DetailItem label="Credential ID" value={result.credentialId} />
-                  <DetailItem label="Issuer Public Key" value={result.issuerPublicKey} breakWords />
+                  <DetailItem
+                    label="Issuer Public Key"
+                    value={result.issuerPublicKey}
+                    breakWords
+                  />
                   <DetailItem label="Issuer Name" value={result.issuer} />
                   <DetailItem
                     label="Transaction Hash"
@@ -105,7 +141,7 @@ export default function StudentVerifier() {
               </div>
             )}
           </motion.div>
-
+<ClaimNFTButton/>
           {/* Right Section */}
           <motion.div
             initial={{ x: 100, opacity: 0 }}
@@ -123,12 +159,23 @@ export default function StudentVerifier() {
                 {result?.studentName || "John Doe"}
               </h3>
               <p className="text-gray-600 mb-6">
-                Issued: {result ? new Date(result.issueDate).toLocaleDateString() : "MM/DD/YYYY"}
+                Issued:{" "}
+                {result
+                  ? new Date(result.issueDate).toLocaleDateString()
+                  : "MM/DD/YYYY"}
               </p>
 
-              <div className={`p-4 rounded-lg mb-6 ${result ? 'bg-green-100' : 'bg-yellow-100'}`}>
-                <span className={`font-semibold ${result ? 'text-green-700' : 'text-yellow-700'}`}>
-                  {result ? '✅ Verified Credential' : '⚠ Pending Verification'}
+              <div
+                className={`p-4 rounded-lg mb-6 ${
+                  result ? "bg-green-100" : "bg-yellow-100"
+                }`}
+              >
+                <span
+                  className={`font-semibold ${
+                    result ? "text-green-700" : "text-yellow-700"
+                  }`}
+                >
+                  {result ? "✅ Verified Credential" : "⚠ Pending Verification"}
                 </span>
               </div>
 
@@ -156,7 +203,9 @@ export default function StudentVerifier() {
                 animate={{ scale: 1 }}
                 className="bg-white rounded-2xl p-8 max-w-md w-full mx-4"
               >
-                <h3 className="text-2xl font-bold text-purple-700 mb-6">Verify Credential</h3>
+                <h3 className="text-2xl font-bold text-purple-700 mb-6">
+                  Verify Credential
+                </h3>
 
                 {!isVerifying && !verificationError ? (
                   <form onSubmit={handleVerify} className="space-y-6">
@@ -171,7 +220,10 @@ export default function StudentVerifier() {
                     <div className="flex gap-4">
                       <button
                         type="button"
-                        onClick={() => setIsDialogOpen(false)}
+                        onClick={() => {
+                          setIsDialogOpen(false);
+                          setCertificateUrl("");
+                        }}
                         className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-md"
                       >
                         Cancel
@@ -190,7 +242,11 @@ export default function StudentVerifier() {
                       <motion.div
                         className="h-full bg-purple-700 rounded-full"
                         initial={{ width: 0 }}
-                        animate={{ width: `${((verificationStep + 1) / verificationSteps.length) * 100}%` }}
+                        animate={{
+                          width: `${
+                            ((verificationStep + 1) / verificationSteps.length) * 100
+                          }%`,
+                        }}
                         transition={{ duration: 0.5 }}
                       />
                     </div>
@@ -219,7 +275,9 @@ export default function StudentVerifier() {
                   </div>
                 ) : verificationError ? (
                   <div className="text-center space-y-4">
-                    <p className="text-red-600 font-semibold text-lg">❌ {verificationError}</p>
+                    <p className="text-red-600 font-semibold text-lg">
+                      ❌ {verificationError}
+                    </p>
                     <button
                       onClick={() => {
                         setIsDialogOpen(false);
@@ -241,18 +299,32 @@ export default function StudentVerifier() {
       {/* Share Section */}
       {result && (
         <div className="bg-white py-10 px-6 rounded-t-3xl shadow-inner mt-12 text-center">
-          <h3 className="text-2xl font-bold text-purple-700 mb-6">🎉 Share Your Achievement</h3>
+          <h3 className="text-2xl font-bold text-purple-700 mb-6">
+            🎉 Share Your Achievement
+          </h3>
           <div className="flex justify-center space-x-6">
-            <FacebookShareButton url={`https://campustocrypto.com/verify/${result.credentialId}`} quote="Check out my verified credential!">
+            <FacebookShareButton
+              url={`https://campustocrypto.com/verify/${result.credentialId}`}
+              quote="Check out my verified credential!"
+            >
               <FacebookIcon size={48} round />
             </FacebookShareButton>
-            <TwitterShareButton url={`https://campustocrypto.com/verify/${result.credentialId}`} title="My verified credential from CampusToCrypto!">
+            <TwitterShareButton
+              url={`https://campustocrypto.com/verify/${result.credentialId}`}
+              title="My verified credential from CampusToCrypto!"
+            >
               <TwitterIcon size={48} round />
             </TwitterShareButton>
-            <LinkedinShareButton url={`https://campustocrypto.com/verify/${result.credentialId}`}>
+            <LinkedinShareButton
+              url={`https://campustocrypto.com/verify/${result.credentialId}`}
+            >
               <LinkedinIcon size={48} round />
             </LinkedinShareButton>
-            <EmailShareButton url={`https://campustocrypto.com/verify/${result.credentialId}`} subject="My Credential" body="Hey, check out my verified credential!">
+            <EmailShareButton
+              url={`https://campustocrypto.com/verify/${result.credentialId}`}
+              subject="My Credential"
+              body="Hey, check out my verified credential!"
+            >
               <EmailIcon size={48} round />
             </EmailShareButton>
           </div>
@@ -273,12 +345,20 @@ function DetailItem({ label, value, breakWords, link }) {
           href={link}
           target="_blank"
           rel="noopener noreferrer"
-          className={`text-purple-700 font-semibold ${breakWords ? 'break-all' : ''}`}
+          className={`text-purple-700 font-semibold ${
+            breakWords ? "break-all" : ""
+          }`}
         >
           {value}
         </a>
       ) : (
-        <p className={`text-gray-800 font-medium ${breakWords ? 'break-all' : ''}`}>{value}</p>
+        <p
+          className={`text-gray-800 font-medium ${
+            breakWords ? "break-all" : ""
+          }`}
+        >
+          {value}
+        </p>
       )}
     </div>
   );

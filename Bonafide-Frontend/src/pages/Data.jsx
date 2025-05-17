@@ -1,148 +1,176 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import Header from "../components/Header";
+import axios from "axios";
 
-const departments = ["BCA", "BSC", "MSC", "MCA", "EEE", "CSE"];
-
-const StudentList = () => {
-  const [students, setStudents] = useState([]);
-  const [selectedDept, setSelectedDept] = useState("BCA");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [cgpaFilter, setCgpaFilter] = useState({ direction: "above", value: "" });
+export default function Dashboard() {
+  const [data, setData] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [selectedDept, setSelectedDept] = useState("");
+  const [kpiCounts, setKpiCounts] = useState({
+    totalStudents: 0,
+    certificatesGenerated: 0,
+    blockchainTxns: 0,
+    certificatesClaimed: 0,
+  });
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await fetch("http://localhost:4000/get-data/data",{
-  method: 'GET',
-  credentials: 'include', // <== this is necessary
-});
-        const result = await response.json();
-        if (response.ok && result.length > 0) {
-          setStudents(result);
-        }
-      } catch (error) {
-        console.error("Error fetching students:", error);
-      }
-    };
+    alert("started");
+    axios
+      .get("http://localhost:4000/get-data/data", {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const allData = res.data;
+        alert("done");
+        setData(allData);
 
-    fetchStudents();
+        // Extract unique departments
+        const deptSet = new Set(allData.map((item) => item.department));
+        const deptArray = Array.from(deptSet);
+        setDepartments(deptArray);
+        setSelectedDept(deptArray[0]); // Select first dept by default
+
+        // Calculate KPIs
+        const totalStudents = allData.length;
+
+        const blockchainTxns = allData.filter(
+          (item) => item.blockchainTxnHash != null
+        ).length;
+
+        const certificatesGenerated = blockchainTxns;
+
+        const certificatesClaimed = allData.filter(
+          (item) => item.claimed === true
+        ).length;
+
+        setKpiCounts({
+          totalStudents,
+          certificatesGenerated,
+          blockchainTxns,
+          certificatesClaimed,
+        });
+      })
+      .catch((err) => {
+        console.error("Error fetching data:", err);
+      });
   }, []);
 
-  const handleSearch = (student) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      student.name?.toLowerCase().includes(term) ||
-      student.registration_number?.toLowerCase().includes(term) ||
-      student.aadhar_number?.includes(term)
-    );
-  };
-
-  const handleCgpaFilter = (student) => {
-    const value = parseFloat(cgpaFilter.value);
-    const cgpa = parseFloat(student.cgpa);
-    if (isNaN(value)) return true;
-    return cgpaFilter.direction === "above" ? cgpa >= value : cgpa <= value;
-  };
-
-  const filteredStudents = students
-    .filter((student) => student.department?.toUpperCase() === selectedDept)
-    .filter(handleSearch)
-    .filter(handleCgpaFilter);
+  const filteredData = data.filter((item) => item.department === selectedDept);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 text-white">
-      <h1 className="text-3xl font-bold text-center mb-6">Student Records</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 text-black font-sans">
+      <Header />
 
-      {/* Department Buttons */}
-      <div className="flex flex-wrap justify-center gap-3 mb-6">
-        {departments.map((dept) => (
-          <button
-            key={dept}
-            onClick={() => setSelectedDept(dept)}
-            className={`px-4 py-2 rounded-full font-semibold shadow-md transition duration-300 ${
-              selectedDept === dept
-                ? "bg-white text-indigo-600"
-                : "bg-indigo-600 hover:bg-indigo-700"
-            }`}
-          >
-            {dept}
-          </button>
-        ))}
-      </div>
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className="w-64 h-screen bg-white/10 backdrop-blur-md p-6 space-y-6 rounded-tr-3xl rounded-br-3xl shadow-lg">
+          <nav className="flex flex-col space-y-4 text-black">
+            <a href="#" className="text-lg font-medium hover:text-blue-300">
+              Dashboard
+            </a>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row justify-center gap-4 items-center mb-6">
-        <input
-          type="text"
-          placeholder="Search by Name, Reg. No, Aadhar..."
-          className="px-4 py-2 rounded-md w-full md:w-96 text-black"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+            <div>
+              <h2 className="text-sm uppercase text-white">Departments</h2>
+              <select
+                className="mt-2 w-full bg-white/20 text-white p-2 rounded-lg backdrop-blur-sm hover:bg-white/30 focus:outline-none"
+                value={selectedDept}
+                onChange={(e) => setSelectedDept(e.target.value)}
+              >
+                {departments.map((dept, idx) => (
+                  <option key={idx} value={dept} className="text-black">
+                    {dept}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="flex items-center gap-2 text-black">
-          <select
-            className="px-2 py-2 rounded-md"
-            value={cgpaFilter.direction}
-            onChange={(e) =>
-              setCgpaFilter((prev) => ({ ...prev, direction: e.target.value }))
-            }
-          >
-            <option value="above">CGPA ≥</option>
-            <option value="below">CGPA ≤</option>
-          </select>
+            <a href="#" className="text-white font-medium hover:text-blue-300">
+              Certificates
+            </a>
+            <a href="#" className="text-white font-medium hover:text-blue-300">
+              Blockchain Activity
+            </a>
+            <a href="#" className="text-white font-medium hover:text-blue-300">
+              Claims Summary
+            </a>
+            <a href="#" className="text-white font-medium hover:text-blue-300">
+              Settings
+            </a>
+          </nav>
+        </aside>
 
-          <input
-            type="number"
-            placeholder="CGPA"
-            className="px-4 py-2 rounded-md w-24"
-            value={cgpaFilter.value}
-            onChange={(e) =>
-              setCgpaFilter((prev) => ({ ...prev, value: e.target.value }))
-            }
-          />
-        </div>
-      </div>
+        {/* Main Content */}
+        <main className="flex-1 p-6">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 text-black">
+            {[
+              {
+                title: "Certificates Generated",
+                count: kpiCounts.certificatesGenerated,
+              },
+              { title: "Blockchain Txns", count: kpiCounts.blockchainTxns },
+              {
+                title: "Certificates Claimed",
+                count: kpiCounts.certificatesClaimed,
+              },
+              { title: "Total Students", count: kpiCounts.totalStudents },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="bg-white bg-opacity-10 rounded-xl p-6 shadow-lg hover:scale-105 transform transition duration-300"
+              >
+                <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                <p className="text-3xl font-bold">{item.count}</p>
+              </div>
+            ))}
+          </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white text-black rounded-lg overflow-hidden">
-          <thead className="bg-indigo-600 text-white">
-            <tr>
-              <th className="py-2 px-4 text-left">Name</th>
-              <th className="py-2 px-4 text-left">Email</th>
-              <th className="py-2 px-4 text-left">Aadhar</th>
-              <th className="py-2 px-4 text-left">Reg. No</th>
-              <th className="py-2 px-4 text-left">Department</th>
-              <th className="py-2 px-4 text-left">CGPA</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => (
-                <tr
-                  key={student._id}
-                  className="border-b hover:bg-gray-100 transition-colors"
-                >
-                  <td className="py-2 px-4">{student.name}</td>
-                  <td className="py-2 px-4">{student.email}</td>
-                  <td className="py-2 px-4">{student.aadhar_number}</td>
-                  <td className="py-2 px-4">{student.registration_number || "N/A"}</td>
-                  <td className="py-2 px-4">{student.department}</td>
-                  <td className="py-2 px-4">{student.cgpa || "N/A"}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="text-center py-4">
-                  No matching students found in {selectedDept}.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+          {/* Student Table */}
+          <section className="bg-white bg-opacity-10 rounded-xl p-6 shadow-lg">
+            <h2 className="text-xl font-semibold mb-4">
+              {selectedDept} Student List
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto text-left">
+                <thead className="text-sm uppercase text-black">
+                  <tr>
+                    <th className="p-2">Name</th>
+                    <th className="p-2">Email</th>
+
+                    <th className="p-2">Issue Date</th>
+                    <th className="p-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.map((student, idx) => (
+                    <tr
+                      key={idx}
+                      className="hover:bg-white hover:bg-opacity-10"
+                    >
+                      <td className="p-2">{student.name}</td>
+                      <td className="p-2">{student.email}</td>
+                      <td className="p-2">{student.status}</td>
+                      <td className="p-2">{student.date || "-"}</td>
+                      <td className="p-2 space-x-2">
+                        <button className="bg-blue-400 px-3 py-1 rounded-lg text-sm hover:bg-blue-500">
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredData.length === 0 && (
+                    <tr>
+                      <td colSpan="6" className="text-center p-4 text-white/70">
+                        No data available for this department.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
       </div>
     </div>
   );
-};
-
-export default StudentList;
+}
