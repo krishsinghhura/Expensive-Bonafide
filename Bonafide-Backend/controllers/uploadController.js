@@ -15,11 +15,7 @@ const uploadData = async (req, res) => {
     }
 
     const univId = req.user.id;
-
-    const univ = University.findOne({
-      _id : univId,
-    })
-    const univToken = jwt.sign({id : univId} , univ.name);
+    console.log("While uplaoding data to mongo ",univId);
 
     const finalData = data.map(row => ({
       ...row,

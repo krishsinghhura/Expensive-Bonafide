@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const studentSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  claimed: { type: Boolean},
+  claimed: { type: Boolean,default:false},
+  walletAddress:{type:String},
+  CertificateUrl:{type:String},
   aadhar_number: { type: String,default: null},
   registration_number: { type: String,default: null },
   department: { type: String,default: null},

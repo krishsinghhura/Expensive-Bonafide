@@ -21,7 +21,7 @@ export default function Dashboard() {
       })
       .then((res) => {
         const allData = res.data;
-        alert("done")
+        alert("done");
         setData(allData);
 
         // Extract unique departments
@@ -32,10 +32,15 @@ export default function Dashboard() {
 
         // Calculate KPIs
         const totalStudents = allData.length;
-        const blockchainTxns = allData.filter((item) => item.txHash).length;
+
+        const blockchainTxns = allData.filter(
+          (item) => item.blockchainTxnHash != null
+        ).length;
+
         const certificatesGenerated = blockchainTxns;
+
         const certificatesClaimed = allData.filter(
-          (item) => item.status === "Claimed"
+          (item) => item.claimed === true
         ).length;
 
         setKpiCounts({
@@ -129,10 +134,9 @@ export default function Dashboard() {
               <table className="w-full table-auto text-left">
                 <thead className="text-sm uppercase text-black">
                   <tr>
-                    <th className="p-2">Student ID</th>
                     <th className="p-2">Name</th>
                     <th className="p-2">Email</th>
-                    <th className="p-2">Status</th>
+
                     <th className="p-2">Issue Date</th>
                     <th className="p-2">Actions</th>
                   </tr>
@@ -143,7 +147,6 @@ export default function Dashboard() {
                       key={idx}
                       className="hover:bg-white hover:bg-opacity-10"
                     >
-                      <td className="p-2">{student.id}</td>
                       <td className="p-2">{student.name}</td>
                       <td className="p-2">{student.email}</td>
                       <td className="p-2">{student.status}</td>
@@ -151,9 +154,6 @@ export default function Dashboard() {
                       <td className="p-2 space-x-2">
                         <button className="bg-blue-400 px-3 py-1 rounded-lg text-sm hover:bg-blue-500">
                           View
-                        </button>
-                        <button className="bg-purple-400 px-3 py-1 rounded-lg text-sm hover:bg-purple-500">
-                          Reissue
                         </button>
                       </td>
                     </tr>

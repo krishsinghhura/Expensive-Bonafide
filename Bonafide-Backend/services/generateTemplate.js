@@ -1,9 +1,8 @@
 const { createCanvas, loadImage } = require('canvas');
-const fs = require('fs');
 const path = require('path');
 
 // Reusable certificate generator function
-const generateCertificate = async ({ name, department, regNumber, cgpa, outputFileName }) => {
+const generateCertificate = async ({ name, department, regNumber, cgpa }) => {
   const width = 1200;
   const height = 850;
   const canvas = createCanvas(width, height);
@@ -39,16 +38,8 @@ const generateCertificate = async ({ name, department, regNumber, cgpa, outputFi
   ctx.font = '20px Arial';
   ctx.fillText('Issued by Centurion University of Technology and Management', 100, height - 60);
 
-  // Save to file
-  const filePath = path.join(__dirname, '../generated', `${outputFileName || name}.png`);
-  const out = fs.createWriteStream(filePath);
-  const stream = canvas.createPNGStream();
-  stream.pipe(out);
-
-  return new Promise((resolve, reject) => {
-    out.on('finish', () => resolve(filePath));
-    out.on('error', reject);
-  });
+  // Return PNG buffer
+  return canvas.toBuffer('image/png');
 };
 
 module.exports = generateCertificate;
