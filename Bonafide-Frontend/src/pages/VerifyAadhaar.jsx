@@ -23,8 +23,6 @@ export default function StudentVerifier() {
   const [verificationStep, setVerificationStep] = useState(0);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState("");
-  const [pendingResult, setPendingResult] = useState(null);
-
 
   const verificationSteps = [
     { label: "Checking credential revocation status", emoji: "🔍" },
@@ -34,48 +32,42 @@ export default function StudentVerifier() {
     { label: "Final confirmation", emoji: "✅" },
   ];
 
- useEffect(() => {
-  if (isVerifying) {
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      if (currentStep < verificationSteps.length) {
-        setVerificationStep(currentStep);
-        currentStep += 1;
-      } else {
-        clearInterval(interval);
-        setIsVerifying(false);
-        if (pendingResult) {
-          setResult(pendingResult);
-          setPendingResult(null);
-          setIsDialogOpen(false); // move this here
+  useEffect(() => {
+    if (isVerifying) {
+      let currentStep = 0;
+      const interval = setInterval(() => {
+        if (currentStep < verificationSteps.length) {
+          setVerificationStep(currentStep);
+          currentStep += 1;
+        } else {
+          clearInterval(interval);
+          setIsVerifying(false);
         }
-      }
-    }, 1500); // 1.5s delay per step (total ~7.5s)
-    return () => clearInterval(interval);
-  }
-}, [isVerifying]);
+      }, 1500);
+      return () => clearInterval(interval);
+    }
+  }, [isVerifying]);
 
   const handleVerify = async (e) => {
-  e.preventDefault();
-  setIsVerifying(true);
-  setVerificationStep(0);
-  setError("");
-  setVerificationError("");
-  setResult(null);
-  setPendingResult(null);
+    e.preventDefault();
+    setIsVerifying(true);
+    setVerificationStep(0);
+    setError("");
+    setVerificationError("");
+    setResult(null);
 
-  try {
-    const response = await axios.post("http://localhost:4000/verify/verify", { email });
-    if (response.status === 200) {
-      setPendingResult(response.data); // Save result temporarily
-      // Don't setResult or close dialog here — wait until animation finishes
+    try {
+      const response = await axios.post("http://localhost:4000/verify/verify", { email });
+      if (response.status === 200) {
+        setResult(response.data);
+        setIsDialogOpen(false);
+      }
+    } catch (err) {
+      console.error("Verification error:", err);
+      setVerificationError(err.response?.data?.error || "Verification failed.");
+      setIsVerifying(false);
     }
-  } catch (err) {
-    console.error("Verification error:", err);
-    setVerificationError(err.response?.data?.error || "Verification failed.");
-    setIsVerifying(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-800 via-purple-700 to-pink-500">
@@ -91,7 +83,7 @@ export default function StudentVerifier() {
           >
             <div className="mb-8">
               <img
-                src="https://drive.google.com/file/d/1rjxVu78Yul82f_TVKJhDLBIctjpO50MT/view?usp=drive_link"
+                src="https://source.unsplash.com/800x400/?certificate"
                 alt="Certificate"
                 className="w-full h-64 object-cover rounded-lg"
               />
@@ -157,7 +149,7 @@ export default function StudentVerifier() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg- bg-backdrop-blur pacity-50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-backdrop-blur bg-opacity-50 flex items-center justify-center z-50"
             >
               <motion.div
                 initial={{ scale: 0.5 }}
