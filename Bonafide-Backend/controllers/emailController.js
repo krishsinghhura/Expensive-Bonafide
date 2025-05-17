@@ -46,8 +46,13 @@ const pushDataToBlockchain = async (EMAIL) => {
 
     console.log("✅ Transaction successful with hash:", receipt.hash);
 
-    const dataFromRedis = await fetchDataFromRedis();
-    if (!dataFromRedis) throw new Error('No data found in redis');
+    let dataFromRedis = await fetchDataFromRedis();
+    if (!dataFromRedis){
+      dataFromRedis = await Student.findOne({email : EMAIL});
+      if(!dataFromRedis){
+        console.log("Data not present in db too");
+      }
+    }
 
     const students = JSON.parse(dataFromRedis);
     const updated = students.map((s) => s.email == EMAIL);
