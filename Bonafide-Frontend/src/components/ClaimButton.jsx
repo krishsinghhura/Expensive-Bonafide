@@ -1,33 +1,58 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
-import ABI from "./abi.json"; // Replace with actual ABI JSON filename if different
+import ABI from "./abi.json"; // Make sure this matches your contract's ABI
 
-const CONTRACT_ADDRESS = "0x83F1DA1967e2FA1022C52c9B0e0EAd0C61bB2a89";
+const CONTRACT_ADDRESS = "0xfc4A09eE27dB9928eFEd9e08DDe3f89224e3B24e"; // Replace with your contract address
 
-const MintEmailNFT = () => {
+const ClaimEmailNFT = () => {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("");
   const [userAddress, setUserAddress] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
 
   const connectWallet = async () => {
     if (window.ethereum) {
       try {
-        const accounts = await window.ethereum.request({
-          method: "eth_requestAccounts",
-        });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []);
         setUserAddress(accounts[0]);
         return accounts[0];
       } catch (error) {
         throw new Error("Wallet connection failed");
       }
     } else {
-      throw new Error("MetaMask not found");
+      throw new Error("Please install MetaMask");
     }
   };
 
-  const handleMint = async () => {
+  const checkEmailVerification = async () => {
     if (!email) {
-      alert("Please enter an email");
+      alert("Please enter your university email");
+      return;
+    }
+
+    try {
+      setStatus("Checking email verification...");
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+      
+      const isVerified = await contract.verifyStudentEmail(email);
+      setIsVerified(isVerified);
+      
+      if (isVerified) {
+        setStatus("✅ Email verified! You can now claim your NFT");
+      } else {
+        setStatus("❌ Email not verified. Contact your university");
+      }
+    } catch (err) {
+      console.error("Verification error:", err);
+      setStatus("❌ Error checking verification: " + err.message);
+    }
+  };
+
+  const claimNFT = async () => {
+    if (!isVerified) {
+      alert("Email must be verified first");
       return;
     }
 
@@ -37,44 +62,82 @@ const MintEmailNFT = () => {
 
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
-
       const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
-      setStatus("Minting NFT...");
-      const tx = await contract.mintEmailSBT(account, email);
+      setStatus("Claiming your NFT... (Confirm in MetaMask)");
+      const tx = await contract.mintNFT(email, account);
       await tx.wait();
 
-      setStatus("✅ NFT Minted Successfully!");
+      setStatus("🎉 NFT Successfully Claimed! Check your wallet");
     } catch (err) {
-      console.error("Transaction error:", err);
-      setStatus("❌ Error: " + err.message);
+      console.error("Claim error:", err);
+      setStatus("❌ Error: " + 
+        (err.message.includes("NFT already minted") 
+          ? "You've already claimed your NFT" 
+          : err.message)
+      );
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 border rounded-lg shadow-md bg-white">
-      <h2 className="text-xl font-semibold mb-4">Claim Your NFT</h2>
+    <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">University Email NFT</h2>
+      
+      <div className="mb-4">
+        <label className="block text-gray-700 mb-2">University Email</label>
+        <input
+          type="email"
+          placeholder="student@university.edu"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
 
-      <input
-        type="email"
-        placeholder="Enter email"
-        className="w-full mb-4 px-4 py-2 border border-gray-300 rounded-md"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={checkEmailVerification}
+          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Check Verification
+        </button>
+        
+        <button
+          onClick={claimNFT}
+          disabled={!isVerified}
+          className={`flex-1 px-4 py-2 rounded-lg transition ${
+            isVerified 
+              ? "bg-green-600 text-white hover:bg-green-700" 
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Claim NFT
+        </button>
+      </div>
 
-      <button
-        onClick={handleMint}
-        className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-pink-500 hover:to-yellow-500 text-white font-bold rounded-lg transition-all duration-300"
-      >
-        Claim NFT (SBT)
-      </button>
+      {userAddress && (
+        <p className="text-sm text-gray-600 mb-2">
+          Connected: {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
+        </p>
+      )}
 
       {status && (
-        <p className="mt-4 text-sm text-center text-blue-600">{status}</p>
+        <p className={`p-3 rounded-lg text-sm ${
+          status.includes("✅") || status.includes("🎉") 
+            ? "bg-green-100 text-green-800" 
+            : status.includes("❌") 
+              ? "bg-red-100 text-red-800" 
+              : "bg-blue-100 text-blue-800"
+        }`}>
+          {status}
+        </p>
       )}
+
+      <div className="mt-4 text-xs text-gray-500">
+        <p>Note: This NFT is non-transferable (Soulbound Token)</p>
+      </div>
     </div>
   );
 };
 
-export default MintEmailNFT;
+export default ClaimEmailNFT;

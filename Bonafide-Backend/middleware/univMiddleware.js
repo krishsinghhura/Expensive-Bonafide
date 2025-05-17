@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 const univMiddleware = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; // Expected: "Bearer token"
+    const token = req.cookies.token;
 
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });

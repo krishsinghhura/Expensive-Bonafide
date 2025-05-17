@@ -19,7 +19,7 @@ const uploadData = async (req, res) => {
 
     const finalData = data.map(row => ({
       ...row,
-      univ_token : univToken,
+      univ_token : univId,
     }))
 
     // Save to Redis with key 'excel_data'

@@ -24,8 +24,8 @@ const pushDataToMongo = async () => {
     await Data.insertMany(formatted);
     console.log('✅ Data successfully pushed to MongoDB!');
 
-    // await redis.del('excel_data');
-    // console.log('🗑️ Redis data deleted after successful push.');
+    await redis.del('excel_data');
+    console.log('🗑️ Redis data deleted after successful push.');
   } catch (err) {
     console.error('❌ Failed to push Redis data to MongoDB:', err);
   }
