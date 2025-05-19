@@ -103,13 +103,43 @@ const pushDataToBlockchain = async (EMAIL) => {
 
     const certURL = publicUrlData.publicUrl;
 
-    // 6. Update certificate URL in Redis
+    // ✅ 5. Create NFT Metadata JSON
+    const metadata = {
+      name: NAME,
+      description: `Degree Certificate for ${NAME}, Dept: ${DEPARTMENT}, CGPA: ${CGPA}`,
+      image: certURL,
+    };
+
+    const metadataJSON = Buffer.from(JSON.stringify(metadata));
+    const metadataFileName = `${outputFileName}.json`;
+
+    // ✅ 6. Upload Metadata JSON to Supabase
+    const { error: jsonUploadError } = await supabase.storage
+      .from("metadata")
+      .upload(metadataFileName, metadataJSON, {
+        contentType: "application/json",
+        upsert: true,
+      });
+
+    if (jsonUploadError) throw new Error("Metadata JSON upload failed");
+
+    // ✅ 7. Get public URL of Metadata JSON
+    const { data: metadataUrlData, error: metadataUrlError } = supabase.storage
+      .from("metadata")
+      .getPublicUrl(metadataFileName);
+
+    if (metadataUrlError) throw new Error("Failed to retrieve metadata public URL");
+
+    const tokenURI = metadataUrlData.publicUrl;
+
+    // 6. Update certificate URL and JSON URL in Redis
     const updatedRedisData = await redis.get("excel_data");
     const updatedParsedData = JSON.parse(updatedRedisData);
     const updatedIndex = updatedParsedData.findIndex(entry => entry.EMAIL === EMAIL); // Changed to uppercase EMAIL
 
     if (updatedIndex !== -1) {
       updatedParsedData[updatedIndex].CertificateUrl = certURL;
+      updatedParsedData[updatedIndex].JSONUrl = tokenURI;
       await redis.set("excel_data", JSON.stringify(updatedParsedData), "EX", 3600);
       console.log(`📝 Certificate URL updated in Redis for ${EMAIL}`);
     }

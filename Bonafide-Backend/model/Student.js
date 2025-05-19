@@ -6,6 +6,7 @@ const studentSchema = new mongoose.Schema({
   claimed: { type: Boolean,default:false},
   walletAddress:{type:String},
   CertificateUrl:{type:String},
+  JSONUrl : {type:String},
   aadhar_number: { type: String,default: null},
   registration_number: { type: String,default: null },
   department: { type: String,default: null},
