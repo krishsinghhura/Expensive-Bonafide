@@ -85,11 +85,14 @@ export default function StudentVerifier() {
             className="bg-white rounded-2xl shadow-2xl p-8"
             style={{ width: "800px", height: "550px" }}
           >
-            <div className="mb-8">
+            <div className="mb-8 flex justify-center items-center bg-gray-100 rounded-lg overflow-hidden">
               <img
-                src="https://source.unsplash.com/800x400/?certificate"
+                src={result?.certificateUrl || "https://source.unsplash.com/800x400/?certificate"}
                 alt="Certificate"
                 className="w-full h-64 object-cover rounded-lg"
+                onError={(e) => {
+                  e.target.src = "https://source.unsplash.com/800x400/?certificate";
+                }}
               />
             </div>
 
@@ -99,23 +102,26 @@ export default function StudentVerifier() {
                   Credential Details
                 </h3>
                 <div className="space-y-4">
-                  <DetailItem label="Credential ID" value={result.credentialId} />
-                  <DetailItem
-                    label="Issuer Public Key"
-                    value={result.issuerPublicKey}
-                    breakWords
-                  />
-                  <DetailItem label="Issuer Name" value={result.issuer} />
+                  <DetailItem label="Student Email" value={result.email} />
                   <DetailItem
                     label="Transaction Hash"
                     value={result.transactionHash}
                     link={`https://subnets-test.avax.network/c-chain/tx/${result.transactionHash}`}
                   />
+                  {result.certificateUrl && (
+                    <DetailItem
+                      label="Certificate URL"
+                      value={result.certificateUrl}
+                      link={result.certificateUrl}
+                      breakWords
+                    />
+                  )}
                 </div>
               </div>
             )}
           </motion.div>
-<ClaimNFTButton/>
+          <ClaimNFTButton />
+
           {/* Right Section */}
           <motion.div
             initial={{ x: 100, opacity: 0 }}
@@ -130,13 +136,10 @@ export default function StudentVerifier() {
                 className="w-32 h-32 rounded-full mx-auto mb-4"
               />
               <h3 className="text-xl font-bold text-purple-700 mb-2">
-                {result?.studentName || "John Doe"}
+                {result?.name || "Student Name"}
               </h3>
               <p className="text-gray-600 mb-6">
-                Issued:{" "}
-                {result
-                  ? new Date(result.issueDate).toLocaleDateString()
-                  : "MM/DD/YYYY"}
+                {result ? "Verified Credential" : "Enter email to verify"}
               </p>
 
               <div
@@ -170,7 +173,7 @@ export default function StudentVerifier() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-backdrop-blur bg-opacity-50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
             >
               <motion.div
                 initial={{ scale: 0.5 }}
@@ -196,7 +199,7 @@ export default function StudentVerifier() {
                         type="button"
                         onClick={() => {
                           setIsDialogOpen(false);
-                          setCertificateUrl("");
+                          setResult(null);
                         }}
                         className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-md"
                       >
@@ -271,33 +274,33 @@ export default function StudentVerifier() {
       </div>
 
       {/* Share Section */}
-      {result && (
+      {result && result.certificateUrl && (
         <div className="bg-white py-10 px-6 rounded-t-3xl shadow-inner mt-12 text-center">
           <h3 className="text-2xl font-bold text-purple-700 mb-6">
             🎉 Share Your Achievement
           </h3>
           <div className="flex justify-center space-x-6">
             <FacebookShareButton
-              url={`https://campustocrypto.com/verify/${result.credentialId}`}
-              quote="Check out my verified credential!"
+              url={result.certificateUrl}
+              quote="Check out my verified certificate!"
             >
               <FacebookIcon size={48} round />
             </FacebookShareButton>
             <TwitterShareButton
-              url={`https://campustocrypto.com/verify/${result.credentialId}`}
-              title="My verified credential from CampusToCrypto!"
+              url={result.certificateUrl}
+              title="My verified certificate!"
             >
               <TwitterIcon size={48} round />
             </TwitterShareButton>
             <LinkedinShareButton
-              url={`https://campustocrypto.com/verify/${result.credentialId}`}
+              url={result.certificateUrl}
             >
               <LinkedinIcon size={48} round />
             </LinkedinShareButton>
             <EmailShareButton
-              url={`https://campustocrypto.com/verify/${result.credentialId}`}
-              subject="My Credential"
-              body="Hey, check out my verified credential!"
+              url={result.certificateUrl}
+              subject="My Certificate"
+              body="Hey, check out my verified certificate!"
             >
               <EmailIcon size={48} round />
             </EmailShareButton>

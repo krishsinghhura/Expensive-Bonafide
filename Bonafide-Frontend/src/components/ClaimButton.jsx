@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ethers } from "ethers";
 import ABI from "./abi.json"; // Make sure this matches your contract's ABI
 
-const CONTRACT_ADDRESS = "0xfc4A09eE27dB9928eFEd9e08DDe3f89224e3B24e"; // Replace with your contract address
+const CONTRACT_ADDRESS = "0xDf5fb0517f05d96410Fd525CD03E68de647FAe83"; // Replace with your contract address
 
 const ClaimEmailNFT = () => {
   const [email, setEmail] = useState("");

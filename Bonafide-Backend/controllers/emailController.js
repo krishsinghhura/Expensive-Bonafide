@@ -1,21 +1,20 @@
-
+// Required Packages
 const { ethers } = require("ethers");
-const redis = require("../redis/redisClient"); // Redis client instance
-const abi = require("../abi.json"); // Smart contract ABI
+const redis = require("../redis/redisClient");
+const abi = require("../abi.json");
 const Data = require("../model/data");
+const Student = require("../model/Student");
 const generateCertificate = require("../services/generateTemplate");
 const nodemailer = require("nodemailer");
 const path = require("path");
 const supabase = require("../config/supabse");
-const Student = require("../model/Student");
-const { log } = require("console");
+require("dotenv").config();
 
-
-require("dotenv").config(); // Initialize Ethereum provider and signer
+// Initialize Ethereum provider and signer
 const provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_PROVIDER_URL);
 const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-// Smart contract instance
+// Smart Contract Instance
 const contract = new ethers.Contract(
   process.env.BLOCKCHAIN_CONTRACT_ADDRESS,
   abi,
@@ -25,111 +24,97 @@ const contract = new ethers.Contract(
 // Fetch student data from Redis
 const fetchDataFromRedis = async () => {
   try {
-    const rawData = await redis.get("excel_data"); // default Redis key
-    if (!rawData)
+    const rawData = await redis.get("excel_data");
+    if (!rawData) {
       throw new Error('No data found in Redis under key "excel_data"');
-
-    return JSON.parse(rawData); // Parse JSON string to object
+    }
+    return JSON.parse(rawData);
   } catch (err) {
     throw new Error("Error fetching/parsing data from Redis: " + err.message);
   }
 };
 
-// Push a single student's data to blockchain
+// Push individual student's data to blockchain
 const pushDataToBlockchain = async (EMAIL) => {
   try {
-    console.log("Starting Transaction for ", EMAIL);
+    console.log(`🚀 Starting transaction for ${EMAIL}`);
 
-    // Blockchain transaction
+    // 1. Write email hash to blockchain
     const tx = await contract.storeEmailHash(EMAIL);
     const receipt = await tx.wait();
+    console.log(`✅ Blockchain transaction successful: ${receipt.hash}`);
 
-    console.log("✅ Transaction successful with hash:", receipt.hash);
+    // 2. Load from Redis
+    const redisData = await redis.get("excel_data");
 
-    let dataFromRedis = await fetchDataFromRedis();
-    if (!dataFromRedis){
-      dataFromRedis = await Student.findOne({email : EMAIL});
-      if(!dataFromRedis){
-        console.log("Data not present in db too");
-      }
+    if (!redisData) {
+      throw new Error("No data found in Redis");
     }
 
-    const students = JSON.parse(dataFromRedis);
-    const updated = students.map((s) => s.email == EMAIL);
+    const parsedData = JSON.parse(redisData);
+    const index = parsedData.findIndex(entry => entry.EMAIL === EMAIL); // Changed to uppercase EMAIL
 
-    if (!updated) {
-      console.warn(`⚠️ Email ${EMAIL} not found in Redis.`);
-      return;
+    if (index === -1) {
+      throw new Error(`No student found with email: ${EMAIL}`);
     }
 
-    // Generate certificate with student data
-    const { name, department, registrationNumber, cgpa } = updated;
+    // Update the entry with blockchain hash
+    parsedData[index].blockchainTxnHash = receipt.hash;
+    const studentData = parsedData[index];
 
-    const outputFileName = name.replace(/\s+/g, "_");
+    // Update Redis with the modified data
+    await redis.set("excel_data", JSON.stringify(parsedData), "EX", 3600);
+    console.log(`📝 Transaction hash updated in Redis for ${EMAIL}`);
+
+    // 3. Generate certificate
+    const { NAME, DEPARTMENT, REGISTRATION_NUMBER, CGPA } = studentData; // Using uppercase field names
+    const outputFileName = NAME.replace(/\s+/g, "_");
     const certificateBuffer = await generateCertificate({
-      name,
-      department,
-      regNumber: registrationNumber,
-      cgpa,
+      name: NAME,
+      department: DEPARTMENT,
+      regNumber: REGISTRATION_NUMBER,
+      cgpa: CGPA,
     });
 
-    const fileName = `${name.replace(/\s+/g, "_")}.png`;
+    const fileName = `${outputFileName}.png`;
 
-    const { data, error } = await supabase.storage
+    // 4. Upload certificate to Supabase
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from("certificates")
       .upload(fileName, certificateBuffer, {
         contentType: "image/png",
         upsert: true,
       });
 
-    if (error) {
-      console.error(
-        "❌ Error uploading certificate to Supabase:",
-        error.message
-      );
-      throw new Error("Certificate upload failed");
+    if (uploadError) {
+      console.error("❌ Supabase upload failed:", uploadError.message);
+      throw new Error("Certificate upload failed.");
     }
 
+    // 5. Get public URL of certificate
     const { data: publicUrlData, error: publicUrlError } = supabase.storage
       .from("certificates")
       .getPublicUrl(fileName);
 
     if (publicUrlError) {
-      console.error(
-        "❌ Failed to get public URL from Supabase:",
-        publicUrlError.message
-      );
+      console.error("❌ Failed to get public URL:", publicUrlError.message);
       throw new Error("Failed to retrieve certificate public URL.");
     }
 
     const certURL = publicUrlData.publicUrl;
 
-    let studentRecord = await Student.findOne(
-      { email: EMAIL },
-    );
+    // 6. Update certificate URL in Redis
+    const updatedRedisData = await redis.get("excel_data");
+    const updatedParsedData = JSON.parse(updatedRedisData);
+    const updatedIndex = updatedParsedData.findIndex(entry => entry.EMAIL === EMAIL); // Changed to uppercase EMAIL
 
-    if (!studentRecord) {
-      console.log("Data not pushed to db yet , moving to redis");
-
-      const updatedStudent = students.map((s) => s.email == EMAIL ? {
-        ...s,
-        blockchainTxnHash: receipt.hash,
-        CertificateUrl: certURL
-      } : {
-        s
-      })
-      await redis.set("excel_data", JSON.stringify(updatedStudent));
-    }
-    else {
-      await Student.findOneAndUpdate(
-        { email: EMAIL },
-        { blockchainTxnHash: receipt.hash },
-        { CertificateUrl: certURL }
-      );
-
-      console.log("updated data saved to db" );
+    if (updatedIndex !== -1) {
+      updatedParsedData[updatedIndex].CertificateUrl = certURL;
+      await redis.set("excel_data", JSON.stringify(updatedParsedData), "EX", 3600);
+      console.log(`📝 Certificate URL updated in Redis for ${EMAIL}`);
     }
 
+    // 7. Send certificate via email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -143,32 +128,36 @@ const pushDataToBlockchain = async (EMAIL) => {
       to: EMAIL,
       subject: "🎓 Your Degree Certificate",
       html: `
-        <p>Dear <b>${name}</b>,</p>
-        <p>Congratulations! Please find attached your official Degree Certificate from Centurion University.</p>
-        <p>Best regards,<br/>Centurion University</p>
+        <div>
+          <p>Dear <b>${NAME}</b>,</p>
+          <p>Congratulations! Please find attached your official Degree Certificate from Centurion University.</p>
+          <p>Best regards,<br/>Centurion University</p>
+        </div>
       `,
       attachments: [
         {
-          filename: `${outputFileName}.png`,
+          filename: fileName,
           content: certificateBuffer,
-          cid: "degreeCert", // optional if you want to embed it in HTML later
+          cid: "degreeCert",
         },
       ],
     };
 
     await transporter.sendMail(mailOptions);
     console.log(`📧 Email sent successfully to ${EMAIL}`);
-    console.log(`Completed for ${EMAIL}`);
+    console.log(`✅ Completed processing for ${EMAIL}`);
+
   } catch (err) {
-    console.error("❌ Blockchain write error:", err);
-    throw new Error("Error pushing data to blockchain: " + err.message);
+    console.error("❌ Error processing student:", EMAIL, "-", err.message);
+    throw new Error("Failed to process " + EMAIL + ": " + err.message);
   }
 };
 
-// Express controller function
+
+
+// Main sync function (Express controller)
 const syncDataToBlockchain = async (req, res) => {
   try {
-    // Fetch data
     const studentData = await fetchDataFromRedis();
 
     if (!Array.isArray(studentData) || studentData.length === 0) {
@@ -177,20 +166,15 @@ const syncDataToBlockchain = async (req, res) => {
         .send("No valid student data available for synchronization.");
     }
 
-    // Sync each student
     for (const student of studentData) {
       if (student.EMAIL) {
         await pushDataToBlockchain(student.EMAIL);
       }
     }
 
-    res
-      .status(200)
-      .send(
-        "✅ All student data successfully synchronized with the blockchain."
-      );
+    res.status(200).send("✅ All student data successfully synchronized with the blockchain.");
   } catch (err) {
-    console.error("❌ Sync process error:", err);
+    console.error("❌ Sync process error:", err.message);
     res.status(500).send("Internal Server Error: " + err.message);
   }
 };

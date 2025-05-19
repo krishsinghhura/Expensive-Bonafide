@@ -1,9 +1,7 @@
-creation of wallet
+edit /verify-student such that it will only take email while verifying and then enable the claim button
 
-change the student Model:=
+/verify/verify route already gives us the image URL, make the NFT for that
 
-=> Add wallet created or not then only we can push to the claming thing, 
+make a backend route which will chnage the clamied attribute to true in redis after beng clamied( also post the wallet address in it )
 
-=> student claim(make a button which will just send a mail for now)[afterwards we will connect o the user wallet and send him thee soul bound token]
-
-=> make a dashboard for university which will show how many transaction has been done and also show the data who have clamied or not
+after this edit the /verify-student again like if the NFT has already claimed then show NFT already clamied in xxxx wallet.
