@@ -120,7 +120,6 @@ export default function StudentVerifier() {
               </div>
             )}
           </motion.div>
-          <ClaimNFTButton />
 
           {/* Right Section */}
           <motion.div
@@ -162,6 +161,8 @@ export default function StudentVerifier() {
               >
                 Verify Credential
               </button>
+
+              <ClaimNFTButton/>
             </div>
           </motion.div>
         </div>
@@ -272,6 +273,7 @@ export default function StudentVerifier() {
           )}
         </AnimatePresence>
       </div>
+
 
       {/* Share Section */}
       {result && result.certificateUrl && (

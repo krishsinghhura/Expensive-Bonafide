@@ -1,169 +1,136 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ethers } from "ethers";
-import ABI from "./abi.json"; // Make sure this matches your contract's ABI
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import ABI from "./abi.json";
 
-const CONTRACT_ADDRESS = "0xDf5fb0517f05d96410Fd525CD03E68de647FAe83"; // Replace with your contract address
-
-const ClaimEmailNFT = () => {
-  const navigate = useNavigate();
-  const [uri, setUri] = useState("");
-  const [email, setEmail] = useState("");
-  const [student, setStudent] = useState("");
+const ClaimNFTButton = ({ 
+  email, 
+  certificateUrl, 
+  disabled,
+  contractAddress,
+  requiredChainId 
+}) => {
   const [status, setStatus] = useState("");
   const [userAddress, setUserAddress] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
-
-  //get the data of all the students from the db
-  useEffect(() => {
-    alert("started");
-    axios
-      .get("http://localhost:4000/get-data/data", {
-        withCredentials: true,
-      })
-      .then((res) => {
-        const allData = res.data;
-        alert("done");
-        setStudent(allData);
-      })
-      .catch((err) => {
-        console.error("Error fetching data:", err);
-      });
-  }, []);
+  const [currentChainId, setCurrentChainId] = useState(null);
 
   const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const accounts = await provider.send("eth_requestAccounts", []);
-        setUserAddress(accounts[0]);
-        return accounts[0];
-      } catch (error) {
-        throw new Error("Wallet connection failed");
-      }
-    } else {
+    if (!window.ethereum) {
       throw new Error("Please install MetaMask");
-    }
-  };
-
-  const checkEmailVerification = async () => {
-    if (!email) {
-      alert("Please enter your university email");
-      return;
     }
 
     try {
-      setStatus("Checking email verification...");
-
-      // 1. Find the student with matching email
-      const matchedStudent = Array.isArray(student)
-        ? student.find((s) => s.email === email)
-        : null;
-
-      if (!matchedStudent) {
-        setStatus("❌ No student found with this email");
-        return;
-      }
-
-      // 2. Extract JSONUrl
-      setUri(matchedStudent.JSONUrl);
-
-      // 3. Verify on blockchain
+      // Request account access
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      
+      // Create provider
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+      
+      // Get network and verify
+      const network = await provider.getNetwork();
+      setCurrentChainId(network.chainId);
 
-      const isVerified = await contract.verifyStudentEmail(email);
-      setIsVerified(isVerified);
-
-      if (isVerified) {
-        setStatus("✅ Email verified! You can now claim your NFT");
-      } else {
-        setStatus("❌ Email not verified. Contact your university");
+      if (requiredChainId && network.chainId !== parseInt(requiredChainId)) {
+        throw new Error(`Please connect to the correct network (Chain ID: ${requiredChainId})`);
       }
-    } catch (err) {
-      console.error("Verification error:", err);
-      setStatus("❌ Error checking verification: " + err.message);
+
+      const accounts = await provider.listAccounts();
+      setUserAddress(accounts[0]);
+      return accounts[0];
+    } catch (error) {
+      console.error("Wallet connection error:", error);
+      throw error;
+    }
+  };
+
+  const switchNetwork = async (chainId) => {
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: `0x${chainId.toString(16)}` }],
+      });
+      return true;
+    } catch (switchError) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902) {
+        throw new Error(`Please add this network to MetaMask first`);
+      }
+      throw switchError;
     }
   };
 
   const claimNFT = async () => {
-    if (!isVerified) {
-      alert("Email must be verified first");
-      return;
-    }
+    // if (!email || !certificateUrl) {
+    //   setStatus("❌ Missing email or certificate URL");
+    //   return;
+    // }
+
+    // if (!contractAddress) {
+    //   setStatus("❌ Contract address not configured");
+    //   return;
+    // }
 
     try {
       setStatus("Connecting wallet...");
       const account = await connectWallet();
 
+      // Check if we need to switch networks
+      if (requiredChainId && currentChainId !== parseInt(requiredChainId)) {
+        setStatus("Switching network...");
+        await switchNetwork(requiredChainId);
+      }
+
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+      const contract = new ethers.Contract(contractAddress, ABI, signer);
 
       setStatus("Claiming your NFT... (Confirm in MetaMask)");
-      const tx = await contract.mintNFT(email, account, uri);
-      await tx.wait();
+      const tx = await contract.mintNFT(account, certificateUrl);
+      
+      setStatus("⏳ Waiting for transaction confirmation...");
+      await tx.wait(); // Wait for transaction to be mined
 
       setStatus("🎉 NFT Successfully Claimed! Check your wallet");
     } catch (err) {
       console.error("Claim error:", err);
-      setStatus(
-        "❌ Error: " +
-          (err.message.includes("NFT already minted")
-            ? "You've already claimed your NFT"
-            : err.message)
-      );
+      let errorMessage = err.message;
+      
+      if (err.code === 4001) {
+        errorMessage = "Transaction rejected by user";
+      } else if (err.message.includes("user rejected")) {
+        errorMessage = "Transaction rejected";
+      } else if (err.message.includes("already minted")) {
+        errorMessage = "You've already claimed your NFT";
+      }
+
+      setStatus(`❌ ${errorMessage.split("(")[0].trim()}`);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        University Email NFT
-      </h2>
-
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-2">University Email</label>
-        <input
-          type="email"
-          placeholder="student@university.edu"
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-
-      <div className="flex space-x-4 mb-4">
-        <button
-          onClick={checkEmailVerification}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          Check Verification
-        </button>
-
-        <button
-          onClick={claimNFT}
-          disabled={!isVerified}
-          className={`flex-1 px-4 py-2 rounded-lg transition ${
-            isVerified
-              ? "bg-green-600 text-white hover:bg-green-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Claim NFT
-        </button>
-      </div>
+    <div className="bg-white rounded-lg p-4 shadow">
+      <button
+        onClick={claimNFT}
+        disabled={disabled}
+        className={`w-full px-4 py-3 rounded-lg font-semibold transition ${
+          disabled
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-green-600 text-white hover:bg-green-700"
+        }`}
+      >
+        🎓 Claim NFT
+      </button>
 
       {userAddress && (
-        <p className="text-sm text-gray-600 mb-2">
+        <p className="mt-2 text-sm text-gray-600">
           Connected: {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
+          {currentChainId && ` (Chain ID: ${currentChainId})`}
         </p>
       )}
 
       {status && (
         <p
-          className={`p-3 rounded-lg text-sm ${
+          className={`mt-3 p-3 rounded text-sm ${
             status.includes("✅") || status.includes("🎉")
               ? "bg-green-100 text-green-800"
               : status.includes("❌")
@@ -175,11 +142,11 @@ const ClaimEmailNFT = () => {
         </p>
       )}
 
-      <div className="mt-4 text-xs text-gray-500">
-        <p>Note: This NFT is non-transferable (Soulbound Token)</p>
-      </div>
+      <p className="mt-2 text-xs text-gray-400">
+        Note: This NFT is non-transferable (Soulbound Token)
+      </p>
     </div>
   );
 };
 
-export default ClaimEmailNFT;
+export default ClaimNFTButton;
