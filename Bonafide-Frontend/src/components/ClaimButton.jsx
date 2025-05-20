@@ -1,36 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ethers } from "ethers";
 import ABI from "./abi.json"; // Make sure this matches your contract's ABI
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 const CONTRACT_ADDRESS = "0xDf5fb0517f05d96410Fd525CD03E68de647FAe83"; // Replace with your contract address
 
 const ClaimEmailNFT = () => {
-  const navigate = useNavigate();
-  const [uri, setUri] = useState("");
   const [email, setEmail] = useState("");
-  const [student, setStudent] = useState("");
   const [status, setStatus] = useState("");
   const [userAddress, setUserAddress] = useState("");
   const [isVerified, setIsVerified] = useState(false);
-
-  //get the data of all the students from the db
-  useEffect(() => {
-    alert("started");
-    axios
-      .get("http://localhost:4000/get-data/data", {
-        withCredentials: true,
-      })
-      .then((res) => {
-        const allData = res.data;
-        alert("done");
-        setStudent(allData);
-      })
-      .catch((err) => {
-        console.error("Error fetching data:", err);
-      });
-  }, []);
 
   const connectWallet = async () => {
     if (window.ethereum) {
@@ -55,27 +33,12 @@ const ClaimEmailNFT = () => {
 
     try {
       setStatus("Checking email verification...");
-
-      // 1. Find the student with matching email
-      const matchedStudent = Array.isArray(student)
-        ? student.find((s) => s.email === email)
-        : null;
-
-      if (!matchedStudent) {
-        setStatus("❌ No student found with this email");
-        return;
-      }
-
-      // 2. Extract JSONUrl
-      setUri(matchedStudent.JSONUrl);
-
-      // 3. Verify on blockchain
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-
+      
       const isVerified = await contract.verifyStudentEmail(email);
       setIsVerified(isVerified);
-
+      
       if (isVerified) {
         setStatus("✅ Email verified! You can now claim your NFT");
       } else {
@@ -102,27 +65,24 @@ const ClaimEmailNFT = () => {
       const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
       setStatus("Claiming your NFT... (Confirm in MetaMask)");
-      const tx = await contract.mintNFT(email, account, uri);
+      const tx = await contract.mintNFT(email, account);
       await tx.wait();
 
       setStatus("🎉 NFT Successfully Claimed! Check your wallet");
     } catch (err) {
       console.error("Claim error:", err);
-      setStatus(
-        "❌ Error: " +
-          (err.message.includes("NFT already minted")
-            ? "You've already claimed your NFT"
-            : err.message)
+      setStatus("❌ Error: " + 
+        (err.message.includes("NFT already minted") 
+          ? "You've already claimed your NFT" 
+          : err.message)
       );
     }
   };
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        University Email NFT
-      </h2>
-
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">University Email NFT</h2>
+      
       <div className="mb-4">
         <label className="block text-gray-700 mb-2">University Email</label>
         <input
@@ -141,13 +101,13 @@ const ClaimEmailNFT = () => {
         >
           Check Verification
         </button>
-
+        
         <button
           onClick={claimNFT}
           disabled={!isVerified}
           className={`flex-1 px-4 py-2 rounded-lg transition ${
-            isVerified
-              ? "bg-green-600 text-white hover:bg-green-700"
+            isVerified 
+              ? "bg-green-600 text-white hover:bg-green-700" 
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
@@ -162,18 +122,16 @@ const ClaimEmailNFT = () => {
       )}
 
       {status && (
-        <p
-          className={`p-3 rounded-lg text-sm ${
-            status.includes("✅") || status.includes("🎉")
-              ? "bg-green-100 text-green-800"
-              : status.includes("❌")
-              ? "bg-red-100 text-red-800"
+        <p className={`p-3 rounded-lg text-sm ${
+          status.includes("✅") || status.includes("🎉") 
+            ? "bg-green-100 text-green-800" 
+            : status.includes("❌") 
+              ? "bg-red-100 text-red-800" 
               : "bg-blue-100 text-blue-800"
-          }`}
-        >
+        }`}>
           {status}
         </p>
-      )}
+      )}  
 
       <div className="mt-4 text-xs text-gray-500">
         <p>Note: This NFT is non-transferable (Soulbound Token)</p>

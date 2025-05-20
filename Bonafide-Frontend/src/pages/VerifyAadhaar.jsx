@@ -57,19 +57,8 @@ export default function StudentVerifier() {
     setVerificationError("");
     setResult(null);
 
-    try {
-      const response = await axios.post(
-        "http://localhost:4000/verify/verify",
-        { email }
-      );
-      if (response.status === 200) {
-        setResult(response.data);
-        setIsDialogOpen(false);
-      }
-    } catch (err) {
-      console.error("Verification error:", err);
-      setVerificationError(err.response?.data?.error || "Verification failed.");
-      setIsVerifying(false);
+   
+    
     }
   };
 
@@ -310,7 +299,6 @@ export default function StudentVerifier() {
       <Footer />
     </div>
   );
-}
 
 // Reusable Detail Component
 function DetailItem({ label, value, breakWords, link }) {
