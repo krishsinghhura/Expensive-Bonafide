@@ -160,16 +160,14 @@ export default function StudentVerifier() {
               >
                 Verify Credential
               </button>
-
-              <ClaimNFTButton/>
             </div>
 
             {/* Claim NFT Button (enabled only if verified) */}
             <div className="mt-8">
               <ClaimNFTButton
-                email={email}
+                email={result?.email || ""}
+                jsonUrl={result?.jsonUrl || ""}
                 disabled={!result}
-                certificateUrl={result?.jsonUrl}
               />
             </div>
           </motion.div>
@@ -281,7 +279,6 @@ export default function StudentVerifier() {
           )}
         </AnimatePresence>
       </div>
-
 
       {/* Share Section */}
       {result && result.certificateUrl && (
