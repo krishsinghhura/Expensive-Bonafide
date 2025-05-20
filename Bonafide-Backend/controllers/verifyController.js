@@ -60,12 +60,6 @@ const verifyStudent = async (req, res) => {
       jsonUrl: jsonUrl || undefined
     };
     
-    console.log("Student details:", {
-      name,
-      certificateUrl,
-      jsonUrl
-    });
-    
     return res.status(200).json(response);
 
   } catch (error) {

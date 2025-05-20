@@ -167,7 +167,7 @@ export default function StudentVerifier() {
               <ClaimNFTButton
                 email={email}
                 disabled={!result}
-                certificateUrl={result?.certificateUrl}
+                certificateUrl={result?.jsonUrl}
               />
             </div>
           </motion.div>

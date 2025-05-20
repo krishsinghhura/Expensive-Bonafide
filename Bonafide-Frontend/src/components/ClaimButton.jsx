@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
-import ABI from "./abi.json"; // Make sure this matches your contract's ABI
+import ABI from "./abi.json";
 
-const CONTRACT_ADDRESS = "0xDf5fb0517f05d96410Fd525CD03E68de647FAe83"; // Replace with your contract address
+const CONTRACT_ADDRESS = "0x0c99df73fB87c46EaA7666CeCfeAA6E758355329";
 
-const ClaimEmailNFT = () => {
-  const [email, setEmail] = useState("");
+const ClaimEmailNFT = ({ email, certificateUrl, disabled }) => {
   const [status, setStatus] = useState("");
   const [userAddress, setUserAddress] = useState("");
   const [isVerified, setIsVerified] = useState(false);
@@ -26,8 +25,10 @@ const ClaimEmailNFT = () => {
   };
 
   const checkEmailVerification = async () => {
-    if (!email) {
-      alert("Please enter your university email");
+    console.log("email",email);
+    
+    if (!email || !certificateUrl) {
+      alert("Email and certificate URL are required");
       return;
     }
 
@@ -51,7 +52,7 @@ const ClaimEmailNFT = () => {
   };
 
   const claimNFT = async () => {
-    if (!isVerified) {
+    if (!isVerified || !certificateUrl) {
       alert("Email must be verified first");
       return;
     }
@@ -65,7 +66,7 @@ const ClaimEmailNFT = () => {
       const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
       setStatus("Claiming your NFT... (Confirm in MetaMask)");
-      const tx = await contract.mintNFT(email, account);
+      const tx = await contract.mintNFT(email, account, certificateUrl);
       await tx.wait();
 
       setStatus("🎉 NFT Successfully Claimed! Check your wallet");
@@ -81,32 +82,26 @@ const ClaimEmailNFT = () => {
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">University Email NFT</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Claim Your University NFT</h2>
       
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-2">University Email</label>
-        <input
-          type="email"
-          placeholder="student@university.edu"
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-
       <div className="flex space-x-4 mb-4">
         <button
           onClick={checkEmailVerification}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          disabled={disabled}
+          className={`flex-1 px-4 py-2 rounded-lg transition ${
+            !disabled
+              ? "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
         >
           Check Verification
         </button>
         
         <button
           onClick={claimNFT}
-          disabled={!isVerified}
+          disabled={!isVerified || disabled}
           className={`flex-1 px-4 py-2 rounded-lg transition ${
-            isVerified 
+            isVerified && !disabled
               ? "bg-green-600 text-white hover:bg-green-700" 
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
@@ -135,6 +130,8 @@ const ClaimEmailNFT = () => {
 
       <div className="mt-4 text-xs text-gray-500">
         <p>Note: This NFT is non-transferable (Soulbound Token)</p>
+        {email && <p>Email: {email}</p>}
+        {certificateUrl && <p>Certificate URL: {certificateUrl.slice(0, 30)}...</p>}
       </div>
     </div>
   );

@@ -14,46 +14,43 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    alert("started");
-    axios
-      .get("http://localhost:4000/get-data/data", {
-        withCredentials: true,
-      })
-      .then((res) => {
-        const allData = res.data;
-        alert("done");
-        setData(allData);
+  axios
+    .get("http://localhost:4000/get-data/data", {
+      withCredentials: true,
+    })
+    .then((res) => {
+      // Extract the data array from the response object
+      const responseData = res.data.data || []; // Fallback to empty array if no data
+      const allData = responseData;
 
-        // Extract unique departments
-        const deptSet = new Set(allData.map((item) => item.department));
-        const deptArray = Array.from(deptSet);
-        setDepartments(deptArray);
-        setSelectedDept(deptArray[0]); // Select first dept by default
+      setData(allData);
 
-        // Calculate KPIs
-        const totalStudents = allData.length;
+      // Rest of your existing code remains the same...
+      const deptSet = new Set(allData.map((item) => item.department));
+      const deptArray = Array.from(deptSet);
+      setDepartments(deptArray);
+      setSelectedDept(deptArray[0]);
 
-        const blockchainTxns = allData.filter(
-          (item) => item.blockchainTxnHash != null
-        ).length;
+      const totalStudents = allData.length;
+      const blockchainTxns = allData.filter(
+        (item) => item.blockchainTxnHash != null
+      ).length;
+      const certificatesGenerated = blockchainTxns;
+      const certificatesClaimed = allData.filter(
+        (item) => item.claimed === true
+      ).length;
 
-        const certificatesGenerated = blockchainTxns;
-
-        const certificatesClaimed = allData.filter(
-          (item) => item.claimed === true
-        ).length;
-
-        setKpiCounts({
-          totalStudents,
-          certificatesGenerated,
-          blockchainTxns,
-          certificatesClaimed,
-        });
-      })
-      .catch((err) => {
-        console.error("Error fetching data:", err);
+      setKpiCounts({
+        totalStudents,
+        certificatesGenerated,
+        blockchainTxns,
+        certificatesClaimed,
       });
-  }, []);
+    })
+    .catch((err) => {
+      console.error("Error fetching data:", err);
+    });
+}, []);
 
   const filteredData = data.filter((item) => item.department === selectedDept);
 
