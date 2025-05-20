@@ -1,4 +1,3 @@
-// pages/StudentVerifier.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -125,7 +124,7 @@ export default function StudentVerifier() {
           <motion.div
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="bg-white rounded-2xl shadow-2xl p-8"
+            className="bg-white rounded-2xl shadow-2xl p-8 flex flex-col justify-between"
             style={{ width: "360px", height: "600px" }}
           >
             <div className="text-center">
@@ -163,6 +162,15 @@ export default function StudentVerifier() {
               </button>
 
               <ClaimNFTButton/>
+            </div>
+
+            {/* Claim NFT Button (enabled only if verified) */}
+            <div className="mt-8">
+              <ClaimNFTButton
+                email={email}
+                disabled={!result}
+                certificateUrl={result?.certificateUrl}
+              />
             </div>
           </motion.div>
         </div>
@@ -282,21 +290,13 @@ export default function StudentVerifier() {
             🎉 Share Your Achievement
           </h3>
           <div className="flex justify-center space-x-6">
-            <FacebookShareButton
-              url={result.certificateUrl}
-              quote="Check out my verified certificate!"
-            >
+            <FacebookShareButton url={result.certificateUrl} quote="Check out my verified certificate!">
               <FacebookIcon size={48} round />
             </FacebookShareButton>
-            <TwitterShareButton
-              url={result.certificateUrl}
-              title="My verified certificate!"
-            >
+            <TwitterShareButton url={result.certificateUrl} title="My verified certificate!">
               <TwitterIcon size={48} round />
             </TwitterShareButton>
-            <LinkedinShareButton
-              url={result.certificateUrl}
-            >
+            <LinkedinShareButton url={result.certificateUrl}>
               <LinkedinIcon size={48} round />
             </LinkedinShareButton>
             <EmailShareButton
@@ -314,7 +314,6 @@ export default function StudentVerifier() {
   );
 }
 
-// Reusable Detail Component
 function DetailItem({ label, value, breakWords, link }) {
   return (
     <div>
@@ -324,18 +323,12 @@ function DetailItem({ label, value, breakWords, link }) {
           href={link}
           target="_blank"
           rel="noopener noreferrer"
-          className={`text-purple-700 font-semibold ${
-            breakWords ? "break-all" : ""
-          }`}
+          className={`text-purple-700 font-semibold ${breakWords ? "break-all" : ""}`}
         >
           {value}
         </a>
       ) : (
-        <p
-          className={`text-gray-800 font-medium ${
-            breakWords ? "break-all" : ""
-          }`}
-        >
+        <p className={`text-gray-800 font-medium ${breakWords ? "break-all" : ""}`}>
           {value}
         </p>
       )}
