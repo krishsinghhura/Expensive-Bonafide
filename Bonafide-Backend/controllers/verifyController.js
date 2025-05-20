@@ -3,7 +3,7 @@ const Student = require("../model/Student");
 const redis = require("../redis/redisClient");
 
 const verifyStudent = async (req, res) => {
-  try {
+  try {    
     const { email } = req.body;
 
     if (!email) {
@@ -34,23 +34,33 @@ const verifyStudent = async (req, res) => {
       return res.status(400).json({ error: 'Blockchain transaction not found for this student' });
     }
 
-    // Get certificate URL
+    // Get certificate URL and JSON URL
     let certificateUrl = null;
+    let jsonUrl = null;
+    
     if (fromRedis) {
+      name=student.name;
       certificateUrl = student.CertificateUrl;
+      jsonUrl = student.JSONUrl; // Get JSON URL from Redis data
     } else {
       const studentWithCert = await Student.findOne({ email });
+      name=studentWithCert?.name;
       certificateUrl = studentWithCert?.CertificateUrl || null;
+      jsonUrl = studentWithCert?.JSONUrl || null; // Get JSON URL from database
     }
 
     // Prepare response
     const response = {
       status: 'OK',
       email: fromRedis ? student.EMAIL : student.email,
+      name:name,
       transactionHash: student.blockchainTxnHash,
-      certificateUrl: certificateUrl || undefined // Only include if exists
+      certificateUrl: certificateUrl || undefined, // Only include if exists
+      jsonUrl: jsonUrl || undefined // Only include if exists
     };
-    console.log("certificateUrl",certificateUrl);
+    
+    console.log("certificateUrl", certificateUrl);
+    console.log("jsonUrl", jsonUrl);
     
     return res.status(200).json(response);
 
