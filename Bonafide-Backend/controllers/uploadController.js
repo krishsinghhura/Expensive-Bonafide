@@ -8,7 +8,7 @@ const uploadData = async (req, res) => {
   try {
     const { data } = req.body;
 
-    console.log(data);
+    // console.log(data);
 
     if (!Array.isArray(data)) {
       return res.status(400).json({ error: 'Data must be an array of rows.' });
@@ -19,8 +19,10 @@ const uploadData = async (req, res) => {
 
     const finalData = data.map(row => ({
       ...row,
-      univ_token : univId,
+      university : univId,
     }))
+    console.log(finalData);
+    
 
     // Save to Redis with key 'excel_data'
     await redis.set('excel_data', JSON.stringify(finalData), 'EX', 3600); // Expires in 1 hour
