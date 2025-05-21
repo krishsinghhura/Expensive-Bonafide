@@ -8,6 +8,7 @@ import AuthPage from "./pages/Auth";
 import Contact from "./pages/Contact"
 import DepartmentStudentViewer from "./pages/Data";
 import StudentDashboard from "./pages/StudentDashboard";
+import Univ_Analytics from "./pages/Univ_Analytics"
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/contact" element={<Contact/>} />
         <Route path="/data" element={<DepartmentStudentViewer/>} />
         <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/analytics" element={<Univ_Analytics />} />
       </Routes>
     </BrowserRouter>
   );
