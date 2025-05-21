@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import ABI from "./abi.json"; // Make sure this matches your contract's ABI
 import { useNavigate } from "react-router-dom";
@@ -17,7 +17,6 @@ const ClaimEmailNFT = () => {
 
   //get the data of all the students from the db
   useEffect(() => {
-    alert("started");
     axios
       .get("http://localhost:4000/get-data/data", {
         withCredentials: true,

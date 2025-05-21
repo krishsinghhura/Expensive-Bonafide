@@ -16,4 +16,5 @@ const studentSchema = new mongoose.Schema({
   claimed : {type : Boolean , default : false},
 }, { timestamps: true });
 
-module.exports = mongoose.model("Data", studentSchema);
+module.exports = mongoose.models.Data || mongoose.model("Data", studentSchema);
+

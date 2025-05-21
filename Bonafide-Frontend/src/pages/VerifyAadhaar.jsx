@@ -63,6 +63,7 @@ export default function StudentVerifier() {
       );
       if (response.status === 200) {
         setResult(response.data);
+        console.log(response.data);
         setIsDialogOpen(false);
       }
     } catch (err) {

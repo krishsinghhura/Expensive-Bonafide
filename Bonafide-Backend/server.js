@@ -7,7 +7,7 @@ const connectToMongoDB=require("./config/mongo");
 require('dotenv').config();
 connectToMongoDB();
 
-cron.schedule('8 14 20 * * *', async () => {
+cron.schedule('* * * * *', async () => {
   console.log('🕒 Running scheduled job to push Redis data to Supabase...');
   await pushDataToMongo();
   console.log('📦 Pushing this data:', formatted);
