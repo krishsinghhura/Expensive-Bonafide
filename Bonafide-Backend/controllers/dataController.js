@@ -1,10 +1,12 @@
 const mongoose = require("mongoose");
-const Data = require("../model/data");
+const Data = require("../model/Data");
 const redisClient = require("../redis/redisClient");
 
 const getDataForUser = async (req, res) => {
   try {
     const univId = req.user.id;
+    console.log(req.user);
+    
     let data = [];
     let fromRedis = false;
 
@@ -32,7 +34,8 @@ const getDataForUser = async (req, res) => {
         // Continue with database query if Redis data is malformed
       }
     }
-
+    console.log("Quering database for data for",req.user.id);
+    
     // If not found in Redis or empty results, query database
     if (!fromRedis || data.length === 0) {
       data = await Data.find({

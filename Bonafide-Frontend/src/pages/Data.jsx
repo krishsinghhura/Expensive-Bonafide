@@ -1,44 +1,66 @@
-// pages/records.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Menu from "../components/Univ_Menu";
-
-const academicYears = ["2021-22", "2022-23", "2023-24"];
-const departments = ["CSE", "ECE", "ME", "CE", "EE"];
-
-const dummyData = {
-  "CSE-2023-24": [
-    {
-      NAME: "Amit Sharma",
-      EMAIL: "amit@example.com",
-      REGISTRATION_NUMBER: "CSE2301",
-      CGPA: "9.2",
-      claimStatus: "Verified",
-    },
-    {
-      NAME: "Nikita Rao",
-      EMAIL: "nikita@example.com",
-      REGISTRATION_NUMBER: "CSE2302",
-      CGPA: "8.7",
-      claimStatus: "Verified",
-    },
-  ],
-  "ECE-2023-24": [
-    {
-      NAME: "Rahul Yadav",
-      EMAIL: "rahul@example.com",
-      REGISTRATION_NUMBER: "ECE2301",
-      CGPA: "8.5",
-      claimStatus: "Unverified",
-    },
-  ],
-};
+import axios from "axios";
 
 export default function Records() {
-  const [selectedYear, setSelectedYear] = useState(academicYears[0]);
+  const [academicYears, setAcademicYears] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [studentData, setStudentData] = useState({});
+
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        const response = await axios.get("http://localhost:4000/get-data/data",{
+          withCredentials : true,
+        });
+        console.log("api hit");
+        
+        const records = response.data.data;
+
+
+        const deptSet = new Set();
+        const yearSet = new Set();
+        const grouped = {};
+
+        records.forEach((student) => {
+          // Extract department
+          const dept = student.department;
+          deptSet.add(dept);
+
+          // Extract academic year from createdAt
+          const date = new Date(student.createdAt);
+          const year = date.getFullYear();
+          const academicYear = `${year}-${String((year + 1) % 100).padStart(
+            2,
+            "0"
+          )}`;
+          yearSet.add(academicYear);
+
+          // Group by dept + year
+          const key = `${dept}-${academicYear}`;
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(student);
+        });
+
+        const sortedYears = Array.from(yearSet).sort().reverse();
+        const sortedDepts = Array.from(deptSet).sort();
+
+        setAcademicYears(sortedYears);
+        setDepartments(sortedDepts);
+        setStudentData(grouped);
+        setSelectedYear(sortedYears[0]); // default to latest year
+      } catch (err) {
+        console.error("Error fetching student data:", err);
+      }
+    };
+
+    fetchStudentData();
+  }, []);
 
   const handleDeptClick = (dept) => {
     setSelectedDept(dept);
@@ -46,8 +68,14 @@ export default function Records() {
   };
 
   const filteredData =
-    dummyData[`${selectedDept}-${selectedYear}`]?.filter((student) =>
-      [student.NAME, student.EMAIL, student.REGISTRATION_NUMBER, selectedDept, selectedYear]
+    studentData[`${selectedDept}-${selectedYear}`]?.filter((student) =>
+      [
+        student.name,
+        student.email,
+        student.registration_number,
+        selectedDept,
+        selectedYear,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
@@ -124,11 +152,15 @@ export default function Records() {
                         {filteredData.length > 0 ? (
                           filteredData.map((student, idx) => (
                             <tr key={idx} className="hover:bg-green-100/50">
-                              <td className="p-2">{student.NAME}</td>
-                              <td className="p-2">{student.EMAIL}</td>
-                              <td className="p-2">{student.REGISTRATION_NUMBER}</td>
-                              <td className="p-2">{student.CGPA}</td>
-                              <td className="p-2">{student.claimStatus}</td>
+                              <td className="p-2">{student.name}</td>
+                              <td className="p-2">{student.email}</td>
+                              <td className="p-2">
+                                {student.registration_number}
+                              </td>
+                              <td className="p-2">{student.cgpa}</td>
+                              <td className="p-2">
+                                {student.claimed ? "Claimed" : "Unclaimed"}
+                              </td>
                             </tr>
                           ))
                         ) : (
