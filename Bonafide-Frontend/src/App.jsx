@@ -9,6 +9,7 @@ import Contact from "./pages/Contact"
 import DepartmentStudentViewer from "./pages/Data";
 import StudentDashboard from "./pages/StudentDashboard";
 import Univ_Analytics from "./pages/Univ_Analytics"
+import Profile from "./pages/Profile"
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/data" element={<DepartmentStudentViewer/>} />
         <Route path="/student-dashboard" element={<StudentDashboard />} />
         <Route path="/analytics" element={<Univ_Analytics />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );

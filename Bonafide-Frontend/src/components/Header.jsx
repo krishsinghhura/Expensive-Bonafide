@@ -1,11 +1,21 @@
 import React from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import Cookies from "js-cookies"
 
 const Header = () => {
   // Active link style
+  const navigate=useNavigate();
   const activeStyle = {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     transform: 'scale(1.05)'
+  };
+
+   const handleLogout = () => {
+    // Clear all auth-related cookies (customize based on your auth keys)
+    Cookies.remove('token'); // Add/remove keys based on your usage
+
+    // Redirect to /auth
+    navigate('/auth');
   };
 
   return (
@@ -103,6 +113,13 @@ const Header = () => {
               </svg>
             </div>
           </NavLink>
+           {/* 🔴 Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="ml-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-500/20 transition-all duration-300 border border-red-500"
+          >
+            Logout
+          </button>
         </nav>
       </div>
     </header>
