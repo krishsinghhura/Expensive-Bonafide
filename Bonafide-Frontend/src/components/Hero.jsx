@@ -1,7 +1,7 @@
 import React from 'react';
 
 const Hero = () => (
-  <section className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white py-28 md:py-36">
+  <section className="bg-blue-500 text-white py-28 md:py-36">
     <div className="max-w-7xl mx-auto px-4 text-center">
       <h2 className="text-6xl md:text-7xl font-extrabold mb-6 animate-fade-in">
         Secure Digital Credentials

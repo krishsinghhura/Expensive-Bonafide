@@ -10,7 +10,7 @@ import Summary from "../components/Description";
 
 function App() {
   return (
-    <div className="font-sans">
+    <div className="font-sans bg-almond-500">
       <Header />
       <Hero />
       <Summary/>
