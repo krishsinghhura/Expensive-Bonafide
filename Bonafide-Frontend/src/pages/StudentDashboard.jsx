@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
+import Cookies from 'js-cookie';
 
 const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -9,6 +10,15 @@ const StudentDashboard = () => {
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+const navigate = useNavigate();
+
+  useEffect(()=>{
+    const token=Cookies.get("token");
+
+    if(!token){
+      navigate("/auth");
+    }
+  },[])
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -27,7 +37,7 @@ const StudentDashboard = () => {
 
     fetchStudentData();
   }, []);
-const navigate = useNavigate();
+
   const openModal = (content) => {
     setModalContent(content);
     setIsModalOpen(true);

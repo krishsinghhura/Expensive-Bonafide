@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { uploadMerkleRoot } from "../utils/uploadMerkleRoot";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Cookies from 'js-cookie';
 
 const ConfirmBlockchainPost = () => {
   const [data, setData] = useState([]);
@@ -10,6 +11,14 @@ const ConfirmBlockchainPost = () => {
   const [counter, setCounter] = useState(0);
   const [isCounting, setIsCounting] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(()=>{
+    const token=Cookies.get("token");
+
+    if(!token){
+      navigate("/auth");
+    }
+  },[])
 
   const fetchData = async () => {
     try {
@@ -21,7 +30,7 @@ const ConfirmBlockchainPost = () => {
       if (response.ok && result.data) {
         setData(result.data);
       } else {
-        alert("Failed to fetch data from Redis.");
+        console.log("Failed to fetch data from Redis.");
       }
     } catch (error) {
       console.error("Error fetching Redis data:", error);

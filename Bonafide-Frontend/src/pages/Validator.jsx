@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import Header from "../components/Header";
 import Footer from "../components/Footer"
+import Cookies from 'js-cookie';
 import { motion } from "framer-motion";
 
 const departments = ["BCA", "BSC", "MSC", "MCA", "EEE", "CSE"];
@@ -28,6 +29,13 @@ const Validator = () => {
   const [alert, setAlert] = useState(null);
 
   const navigate = useNavigate();
+  useEffect(()=>{
+    const token=Cookies.get("token");
+
+    if(!token){
+      navigate("/auth");
+    }
+  },[])
 
   const validateRow = (row) => {
     const errors = [];

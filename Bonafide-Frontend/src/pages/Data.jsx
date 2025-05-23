@@ -3,6 +3,8 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Menu from "../components/Univ_Menu";
 import axios from "axios";
+import Cookies from 'js-cookie';
+import { useNavigate } from "react-router-dom";
 
 export default function Records() {
   const [academicYears, setAcademicYears] = useState([]);
@@ -11,6 +13,15 @@ export default function Records() {
   const [selectedDept, setSelectedDept] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [studentData, setStudentData] = useState({});
+   const navigate = useNavigate();
+
+  useEffect(()=>{
+    const token=Cookies.get("token");
+
+    if(!token){
+      navigate("/auth");
+    }
+  },[])
 
   useEffect(() => {
     const fetchStudentData = async () => {
