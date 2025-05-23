@@ -1,8 +1,9 @@
 // pages/analytics.jsx
+import { useEffect, useState } from "react";
+import axios from "axios";
 import Menu from "../components/Univ_Menu";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-
 import {
   BarChart,
   Bar,
@@ -12,25 +13,62 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend
+  Legend,
 } from "recharts";
-
-const data = [
-  { name: "CSE", Verified: 9, Unverified: 1 },
-  { name: "ECE", Verified: 8, Unverified: 2 },
-  { name: "ME", Verified: 7, Unverified: 3 },
-  { name: "EEE", Verified: 6, Unverified: 4 },
-  { name: "CIVIL", Verified: 5, Unverified: 5 },
-];
-
-const pieData = [
-  { name: "Verified", value: 35 },
-  { name: "Unverified", value: 15 },
-];
 
 const COLORS = ["#38b2ac", "#f56565"];
 
 export default function Analytics() {
+  const [barData, setBarData] = useState([]);
+  const [pieData, setPieData] = useState([]);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await axios.get("http://localhost:4000/get-data/data", {
+          withCredentials: true, // sends cookies for auth
+        });
+
+        const students = response.data.data;
+
+        const departmentMap = {};
+        let verified = 0;
+        let unverified = 0;
+
+        students.forEach((student) => {
+          const dept = student.department || "Unknown";
+          const isVerified = student.claimed;
+
+          if (!departmentMap[dept]) {
+            departmentMap[dept] = {
+              name: dept,
+              Verified: 0,
+              Unverified: 0,
+            };
+          }
+
+          if (isVerified) {
+            departmentMap[dept].Verified += 1;
+            verified += 1;
+          } else {
+            departmentMap[dept].Unverified += 1;
+            unverified += 1;
+          }
+        });
+
+        setBarData(Object.values(departmentMap));
+        setPieData([
+          { name: "Verified", value: verified },
+          { name: "Unverified", value: unverified },
+        ]);
+      } catch (err) {
+        console.error("Failed to fetch analytics:", err);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-gray-100 text-black">
       <Menu />
@@ -43,7 +81,7 @@ export default function Analytics() {
             {/* Bar Chart */}
             <div className="bg-white rounded-lg p-6 shadow-lg">
               <h3 className="text-lg font-semibold mb-4">Department Verification Summary</h3>
-              <BarChart width={450} height={300} data={data}>
+              <BarChart width={450} height={300} data={barData}>
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
@@ -67,7 +105,6 @@ export default function Analytics() {
                       `${name} ${(percent * 100).toFixed(0)}%`
                     }
                     outerRadius={100}
-                    fill="#8884d8"
                     dataKey="value"
                   >
                     {pieData.map((entry, index) => (

@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
-const Data = require("../model/data");
+const Data = require("../model/Data");
+const Student = require("../model/Student")
 const redisClient = require("../redis/redisClient");
+const University = require("../model/University");
 
 const getDataForUser = async (req, res) => {
   try {
@@ -55,4 +57,27 @@ const getDataForUser = async (req, res) => {
   }
 };
 
-module.exports = { getDataForUser };
+const getAuthenticatedUserDetails = async (req,res) => {
+  const id = req.user.id;
+  console.log("id for the authenticated user" , id);
+  
+  if(!id) return res.status(404).json('No id found for the authenticated user');
+
+  const student = await Student.findById(id);
+  if(student){
+    res.json({
+      student
+    })
+  }
+  else{
+    const university = await University.findById(id);
+    if(!university){
+      return res.status(404).json('Authenticated user not found');
+    }
+    res.json({
+      university
+    })
+  }
+}
+
+module.exports = { getDataForUser , getAuthenticatedUserDetails };

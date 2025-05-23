@@ -4,7 +4,7 @@ const Student = require("../model/Student");
 
 const getStudentProfile = async (req, res) => {
   try {
-    const studentId = req.user.id;
+    const studentId = req.user.id; 
     console.log(studentId);
     
     if (!studentId) {
