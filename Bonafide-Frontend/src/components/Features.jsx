@@ -27,7 +27,7 @@ const Features = () => (
         {features.map((feature, index) => (
           <div
             key={index}
-            className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-105 hover:bg-gradient-to-r hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 hover:text-white"
+          className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-105 hover:bg-blue-500 hover:text-white"
           >
             <div className="flex justify-center mb-4">
               <CheckCircle className="text-indigo-600 w-8 h-8" />
