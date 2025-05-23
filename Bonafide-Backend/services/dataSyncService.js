@@ -11,15 +11,21 @@ const pushDataToMongo = async () => {
     }
 
     const data = JSON.parse(rawData);
-
+    console.log(data);
+    
     const formatted = data.map(row => ({
-      university : row.university,
+      university: row.university,
       name: row.NAME,
       email: row.EMAIL,
       aadhar_number: row["AADHAR NUMBER"],
       registration_number: row["REGISTRATION NUMBER"],
       department: row.DEPARTMENT,
       cgpa: parseFloat(row.CGPA),
+      walletAddress: row.walletAddress || '', // Add default if not present in Redis
+      CertificateUrl: row.CertificateUrl || '', // Note: Fix typo if needed (CertificateUrl vs CertificateUrl)
+      JsonUrl: row.JSONUrl || '',
+      blockchainTxnHash: row.blockchainTxnHash || null,
+      claimed: row.claimed || false // Default to false if not present
     }));
 
     await Data.insertMany(formatted);

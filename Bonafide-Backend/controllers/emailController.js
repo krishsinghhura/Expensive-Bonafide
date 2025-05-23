@@ -2,7 +2,7 @@
 const { ethers } = require("ethers");
 const redis = require("../redis/redisClient");
 const abi = require("../abi.json");
-const Data = require("../model/data");
+const Data = require("../model/Data");
 const Student = require("../model/Student");
 const generateCertificate = require("../services/generateTemplate");
 const nodemailer = require("nodemailer");
@@ -52,7 +52,7 @@ const pushDataToBlockchain = async (EMAIL) => {
     }
 
     const parsedData = JSON.parse(redisData);
-    const index = parsedData.findIndex(entry => entry.EMAIL === EMAIL); // Changed to uppercase EMAIL
+    const index = parsedData.findIndex(entry => entry.EMAIL === EMAIL);
 
     if (index === -1) {
       throw new Error(`No student found with email: ${EMAIL}`);
@@ -67,8 +67,15 @@ const pushDataToBlockchain = async (EMAIL) => {
     console.log(`📝 Transaction hash updated in Redis for ${EMAIL}`);
 
     // 3. Generate certificate
-    const { NAME, DEPARTMENT, REGISTRATION_NUMBER, CGPA } = studentData; // Using uppercase field names
-    const outputFileName = NAME.replace(/\s+/g, "_");
+    const { NAME, DEPARTMENT, REGISTRATION_NUMBER, CGPA } = studentData;
+    const baseFileName = NAME.replace(/\s+/g, "_");
+    
+    // Generate unique identifier (timestamp + random string)
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 8);
+    const uniqueIdentifier = `${timestamp}_${randomString}`;
+    
+    const outputFileName = `${baseFileName}_${uniqueIdentifier}`;
     const certificateBuffer = await generateCertificate({
       name: NAME,
       department: DEPARTMENT,
@@ -76,12 +83,12 @@ const pushDataToBlockchain = async (EMAIL) => {
       cgpa: CGPA,
     });
 
-    const fileName = `${outputFileName}.png`;
+    const imageFileName = `${outputFileName}.png`;
 
     // 4. Upload certificate to Supabase
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("certificates")
-      .upload(fileName, certificateBuffer, {
+      .upload(imageFileName, certificateBuffer, {
         contentType: "image/png",
         upsert: true,
       });
@@ -94,7 +101,7 @@ const pushDataToBlockchain = async (EMAIL) => {
     // 5. Get public URL of certificate
     const { data: publicUrlData, error: publicUrlError } = supabase.storage
       .from("certificates")
-      .getPublicUrl(fileName);
+      .getPublicUrl(imageFileName);
 
     if (publicUrlError) {
       console.error("❌ Failed to get public URL:", publicUrlError.message);
@@ -103,7 +110,7 @@ const pushDataToBlockchain = async (EMAIL) => {
 
     const certURL = publicUrlData.publicUrl;
 
-    // ✅ 5. Create NFT Metadata JSON
+    // 5. Create NFT Metadata JSON
     const metadata = {
       name: NAME,
       description: `Degree Certificate for ${NAME}, Dept: ${DEPARTMENT}, CGPA: ${CGPA}`,
@@ -113,7 +120,7 @@ const pushDataToBlockchain = async (EMAIL) => {
     const metadataJSON = Buffer.from(JSON.stringify(metadata));
     const metadataFileName = `${outputFileName}.json`;
 
-    // ✅ 6. Upload Metadata JSON to Supabase
+    // 6. Upload Metadata JSON to Supabase
     const { error: jsonUploadError } = await supabase.storage
       .from("metadata")
       .upload(metadataFileName, metadataJSON, {
@@ -123,7 +130,7 @@ const pushDataToBlockchain = async (EMAIL) => {
 
     if (jsonUploadError) throw new Error("Metadata JSON upload failed");
 
-    // ✅ 7. Get public URL of Metadata JSON
+    // 7. Get public URL of Metadata JSON
     const { data: metadataUrlData, error: metadataUrlError } = supabase.storage
       .from("metadata")
       .getPublicUrl(metadataFileName);
@@ -132,10 +139,10 @@ const pushDataToBlockchain = async (EMAIL) => {
 
     const tokenURI = metadataUrlData.publicUrl;
 
-    // 6. Update certificate URL and JSON URL in Redis
+    // 8. Update certificate URL and JSON URL in Redis
     const updatedRedisData = await redis.get("excel_data");
     const updatedParsedData = JSON.parse(updatedRedisData);
-    const updatedIndex = updatedParsedData.findIndex(entry => entry.EMAIL === EMAIL); // Changed to uppercase EMAIL
+    const updatedIndex = updatedParsedData.findIndex(entry => entry.EMAIL === EMAIL);
 
     if (updatedIndex !== -1) {
       updatedParsedData[updatedIndex].CertificateUrl = certURL;
@@ -144,7 +151,7 @@ const pushDataToBlockchain = async (EMAIL) => {
       console.log(`📝 Certificate URL updated in Redis for ${EMAIL}`);
     }
 
-    // 7. Send certificate via email
+    // 9. Send certificate via email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -166,7 +173,7 @@ const pushDataToBlockchain = async (EMAIL) => {
       `,
       attachments: [
         {
-          filename: fileName,
+          filename: `${baseFileName}.png`, // Use the base filename without unique identifier for email
           content: certificateBuffer,
           cid: "degreeCert",
         },

@@ -3,7 +3,7 @@ const University = require('./University');
 
 const studentSchema = new mongoose.Schema({
   university : {type:mongoose.Schema.Types.ObjectId,ref:University},
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true },
   password: { type: String, required: true },
   claimed: { type: Boolean,default:false},
   walletAddress:{type:String},

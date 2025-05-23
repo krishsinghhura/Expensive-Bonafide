@@ -1,6 +1,8 @@
 // EditData.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 const EditData = () => {
   const [students, setStudents] = useState([]);
@@ -66,6 +68,7 @@ const EditData = () => {
 
   return (
     <div className="p-8 bg-blue-50 min-h-screen">
+      <Header/>
       <h2 className="text-2xl text-blue-700 font-semibold mb-4">✏️ Edit Student Data</h2>
 
       {/* Search Bar */}
@@ -119,6 +122,7 @@ const EditData = () => {
       >
         💾 Save Changes
       </button>
+      <Footer/>
     </div>
   );
 };

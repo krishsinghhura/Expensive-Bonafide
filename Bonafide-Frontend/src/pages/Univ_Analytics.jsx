@@ -30,6 +30,8 @@ export default function Analytics() {
         });
 
         const students = response.data.data;
+        console.log(students);
+        
 
         const departmentMap = {};
         let verified = 0;
@@ -79,7 +81,7 @@ export default function Analytics() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Bar Chart */}
-            <div className="bg-white rounded-lg p-6 shadow-lg">
+            <div className="bg-white rounded-lg p-6 shadow-2xl">
               <h3 className="text-lg font-semibold mb-4">Department Verification Summary</h3>
               <BarChart width={450} height={300} data={barData}>
                 <XAxis dataKey="name" />
@@ -92,7 +94,7 @@ export default function Analytics() {
             </div>
 
             {/* Pie Chart */}
-            <div className="bg-white rounded-lg p-6 shadow-lg flex justify-center">
+            <div className="bg-white rounded-lg p-6 shadow-2xl flex justify-center">
               <div>
                 <h3 className="text-lg font-semibold mb-4">Overall Verification Ratio</h3>
                 <PieChart width={300} height={300}>

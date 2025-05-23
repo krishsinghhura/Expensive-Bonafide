@@ -7,8 +7,12 @@ import {
   FaTimesCircle,
   FaSave,
   FaDatabase,
+  FaInfoCircle,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import Header from "../components/Header";
+import Footer from "../components/Footer"
+import Cookies from 'js-cookie';
 import { motion } from "framer-motion";
 
 const departments = ["BCA", "BSC", "MSC", "MCA", "EEE", "CSE"];
@@ -18,11 +22,20 @@ const Validator = () => {
   const [validRows, setValidRows] = useState([]);
   const [invalidRows, setInvalidRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const [progress, setProgress] = useState(0);
   const [savedData, setSavedData] = useState(null);
   const [alert, setAlert] = useState(null);
 
   const navigate = useNavigate();
+  useEffect(()=>{
+    const token=Cookies.get("token");
+
+    if(!token){
+      navigate("/auth");
+    }
+  },[])
 
   const validateRow = (row) => {
     const errors = [];
@@ -42,169 +55,239 @@ const Validator = () => {
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const data = evt.target.result;
-      const workbook = XLSX.read(data, { type: "binary" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(worksheet);
-      setRows(json);
-      setLoading(true);
-      setValidRows([]);
-      setInvalidRows([]);
-      const tempValid = [];
-      const tempInvalid = [];
-      let count = 0;
-      const interval = setInterval(() => {
-        if (count < json.length) {
-          const row = json[count];
-          const errors = validateRow(row);
-          if (errors.length === 0) tempValid.push(row);
-          else tempInvalid.push({ ...row, errors });
-          count++;
-          setProgress(Math.floor((count / json.length) * 100));
-        } else {
-          clearInterval(interval);
-          setValidRows(tempValid);
-          setInvalidRows(tempInvalid);
-          setLoading(false);
+      try {
+        const data = evt.target.result;
+        const workbook = XLSX.read(data, { type: "binary" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+        
+        if (json.length === 0) {
+          setAlert({ type: "error", message: "The uploaded file contains no data" });
+          return;
         }
-      }, 2000 / json.length);
+
+        setRows(json);
+        setLoading(true);
+        setValidRows([]);
+        setInvalidRows([]);
+        
+        const tempValid = [];
+        const tempInvalid = [];
+        let count = 0;
+        
+        const interval = setInterval(() => {
+          if (count < json.length) {
+            const row = json[count];
+            const errors = validateRow(row);
+            if (errors.length === 0) tempValid.push(row);
+            else tempInvalid.push({ ...row, errors });
+            count++;
+            setProgress(Math.floor((count / json.length) * 100));
+          } else {
+            clearInterval(interval);
+            setValidRows(tempValid);
+            setInvalidRows(tempInvalid);
+            setLoading(false);
+            
+            if (tempInvalid.length > 0) {
+              setAlert({
+                type: "warning",
+                message: `${tempInvalid.length} records failed validation. Please review before saving.`,
+              });
+            }
+          }
+        }, 2000 / json.length);
+      } catch (error) {
+        console.error("Error processing file:", error);
+        setAlert({ type: "error", message: "Error processing Excel file. Please check the format." });
+        setLoading(false);
+      }
+    };
+    reader.onerror = () => {
+      setAlert({ type: "error", message: "Error reading file. Please try again." });
+      setLoading(false);
     };
     reader.readAsBinaryString(file);
   };
 
   const handleSave = async () => {
-    const allData = [...validRows, ...invalidRows];
+    if (validRows.length === 0) {
+      setAlert({ type: "warning", message: "No valid data to save" });
+      return;
+    }
+
+    setSaving(true);
     try {
       const response = await fetch("http://localhost:4000/api/upload", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: allData }),
+        body: JSON.stringify({ data: validRows }),
       });
+      
       const result = await response.json();
-      if (response.ok)
+      if (response.ok) {
         setAlert({
           type: "success",
-          message: "Data successfully cached to Redis!",
+          message: `${validRows.length} records successfully cached to Redis!`,
         });
-      else
+        setSavedData(validRows);
+      } else {
         setAlert({
           type: "error",
-          message: `Failed to save data: ${result.error}`,
+          message: result.error || "Failed to save data to server",
         });
+      }
     } catch (error) {
       console.error("Error saving to backend:", error);
       setAlert({
         type: "error",
-        message: "Something went wrong while saving data.",
+        message: "Network error while saving data. Please try again.",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleFetchFromRedis = async () => {
+    setFetching(true);
     try {
       const response = await fetch("http://localhost:4000/api/fetch", {
         method: "GET",
         credentials: "include", 
       });
       const result = await response.json();
-      if (response.ok && result.data?.length > 0) setSavedData(result.data);
+      if (response.ok && result.data?.length > 0) {
+        setSavedData(result.data);
+      }
     } catch (err) {
-      console.error(err);
-      setAlert({ type: "error", message: "Error fetching from Redis." });
+      console.error("Redis fetch error:", err);
+      setAlert({ type: "error", message: "Error fetching cached data" });
+    } finally {
+      setFetching(false);
     }
   };
 
-  const PostingToBlockchain = () => navigate("/confirmation");
+  const PostingToBlockchain = () => {
+    if (!savedData || savedData.length === 0) {
+      setAlert({ type: "warning", message: "No validated data available to post" });
+      return;
+    }
+    navigate("/confirmation");
+  };
 
   useEffect(() => {
     handleFetchFromRedis();
   }, []);
 
+  useEffect(() => {
+    if (alert) {
+      const timer = setTimeout(() => setAlert(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [alert]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-500 via-purple-400 to-pink-500 text-gray-800 backdrop-blur-lg">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
 
+      {/* Alert Notification */}
       {alert && (
         <motion.div
-          className={`fixed top-4 right-4 p-4 rounded-md shadow-md max-w-xs w-full z-50 ${
+          className={`fixed top-4 right-4 p-4 rounded-md shadow-lg max-w-xs w-full z-50 flex items-start ${
             alert.type === "success"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
+              ? "bg-green-50 border border-green-200 text-green-800"
+              : alert.type === "error"
+              ? "bg-red-50 border border-red-200 text-red-800"
+              : "bg-yellow-50 border border-yellow-200 text-yellow-800"
           }`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <p>{alert.message}</p>
+          {alert.type === "success" ? (
+            <FaCheckCircle className="mt-1 mr-2 flex-shrink-0 text-green-500" />
+          ) : alert.type === "error" ? (
+            <FaTimesCircle className="mt-1 mr-2 flex-shrink-0 text-red-500" />
+          ) : (
+            <FaExclamationTriangle className="mt-1 mr-2 flex-shrink-0 text-yellow-500" />
+          )}
+          <div>
+            <p className="font-medium">{alert.message}</p>
+          </div>
         </motion.div>
       )}
 
-      <main className="h-full min-h-[600px] sm:backdrop-blur flex flex-col items-center px-6 sm:px-16 mt-21">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          {/* LEFT HALF: Guide + Do's & Don'ts */}
-          <div className="bg-white rounded-2xl shadow-md p-8 h-full">
-            <h2 className="text-3xl font-bold text-blue-700 mb-4">
-              How to Validate?
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Left Panel - Instructions */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-2xl font-bold text-blue-800 mb-4">
+              Data Validation Guidelines
             </h2>
-            <ul className="list-disc list-inside text-gray-800 space-y-2 mb-6">
-              <li>Prepare an Excel file with all student data.</li>
-              <li>
-                Ensure headers like EMAIL, CGPA, DEPARTMENT, etc., are present.
-              </li>
-              <li>CGPA must be between 0 and 10.</li>
-              <li>Email format must be valid.</li>
-              <li>AADHAR and Reg. No. must have 12 digits.</li>
-              <li>DEPARTMENT must be valid.</li>
-            </ul>
-
-            <h3 className="text-2xl font-semibold text-purple-700 mt-6 mb-3">
-              Do's ✅
-            </h3>
-            <ul className="list-disc list-inside text-green-700 space-y-1">
-              <li>Check headers before uploading.</li>
-              <li>Use .xlsx or .xls format only.</li>
-              <li>Check CGPA and department fields.</li>
-            </ul>
-
-            <h3 className="text-2xl font-semibold text-red-700 mt-6 mb-3">
-              Don'ts ❌
-            </h3>
-            <ul className="list-disc list-inside text-red-600 space-y-1">
-              <li>Don't include extra spaces in headers.</li>
-              <li>Don't use merged cells.</li>
-              <li>Don't upload PDFs or CSVs.</li>
-            </ul>
-          </div>
-
-          {/* RIGHT HALF: Description + Upload */}
-          <div className="bg-white rounded-2xl shadow-md p-8 h-full flex flex-col justify-between space-y-6">
-            {/* What are we doing? */}
-            <div>
-              <h2 className="text-3xl font-bold text-blue-700 mb-3">
-                What are we doing?
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                We are verifying student data uploaded through an Excel file.
-                Each row is validated against rules like email format, AADHAR
-                length, CGPA range, and valid department. Valid and invalid data
-                are separated visually. You can also push validated data to the
-                blockchain.
-              </p>
+            
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-blue-700 mb-2 flex items-center">
+                <FaInfoCircle className="mr-2 text-blue-500" />
+                Required Fields
+              </h3>
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex items-start">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">EMAIL</span>
+                  <span>Valid email format (user@domain.com)</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">AADHAR NUMBER</span>
+                  <span>Exactly 12 digits</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">REGISTRATION NUMBER</span>
+                  <span>Exactly 12 digits</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">DEPARTMENT</span>
+                  <span>One of: {departments.join(", ")}</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">CGPA</span>
+                  <span>Number between 0 and 10</span>
+                </li>
+              </ul>
             </div>
 
-            {/* File Upload */}
-            <div>
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r">
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">Best Practices</h3>
+              <ul className="text-sm text-gray-700 space-y-1">
+                <li>• Ensure consistent formatting in your Excel file</li>
+                <li>• Remove any empty rows before uploading</li>
+                <li>• Verify department names match exactly</li>
+                <li>• Save your file as .xlsx for best compatibility</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Right Panel - Upload Area */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-2xl font-bold text-blue-800 mb-4">
+              Upload Student Data
+            </h2>
+            
+            <div className="mb-6">
               <label
                 htmlFor="file-upload"
-                className="cursor-pointer block border-2 border-dashed border-blue-400 p-6 rounded-lg text-center hover:bg-blue-100 transition"
+                className="flex flex-col items-center justify-center border-2 border-dashed border-blue-300 rounded-lg p-8 cursor-pointer hover:bg-blue-50 transition-colors"
               >
-                <FaFileUpload className="w-10 h-10 mx-auto text-blue-600" />
-                <p className="mt-2 text-blue-700 font-semibold">
-                  Click or Drag to Upload Excel File
+                <FaFileUpload className="w-12 h-12 text-blue-500 mb-4" />
+                <p className="text-lg font-medium text-blue-700 mb-1">
+                  Drag & Drop Excel File Here
                 </p>
+                <p className="text-sm text-gray-500">or click to browse files</p>
+                <p className="text-xs text-gray-400 mt-2">Supports .xlsx, .xls</p>
               </label>
               <input
                 id="file-upload"
@@ -214,144 +297,258 @@ const Validator = () => {
                 accept=".xlsx, .xls"
               />
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                PostingToBlockchain();
-              }}
-              className="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded w-full mb-21"
-            >
-              <FaDatabase className="inline mr-2" /> Post to Blockchain
-            </button>
+
+            <div className="flex space-x-4">
+              <button
+                onClick={handleSave}
+                disabled={validRows.length === 0 || saving}
+                className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg font-medium transition-colors ${
+                  validRows.length === 0 || saving
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                {saving ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <FaSave className="mr-2" /> Save Valid Data
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={PostingToBlockchain}
+                disabled={!savedData || savedData.length === 0}
+                className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg font-medium transition-colors ${
+                  !savedData || savedData.length === 0
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-800 hover:bg-blue-900 text-white"
+                }`}
+              >
+                <FaDatabase className="mr-2" /> Post to Blockchain
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Loading Indicator */}
         {loading && (
-          <div className="w-full max-w-4xl mb-10">
-            <div className="text-blue-700 font-semibold">
-              Validating Rows...
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center">
+              <svg className="animate-spin -ml-1 mr-4 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-gray-800">Validating Student Records</h3>
+                <p className="text-sm text-gray-500">
+                  Processed {Math.floor(rows.length * (progress / 100))} of {rows.length} records ({progress}%)
+                </p>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                  <div 
+                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+              </div>
             </div>
-            <div className="w-full h-2 bg-blue-200 rounded">
-              <div
-                style={{ width: `${progress}%` }}
-                className="h-full bg-blue-700 rounded transition-all"
-              />
-            </div>
-            <p className="text-sm mt-1 text-gray-600">
-              {Math.floor(rows.length * (progress / 100))} / {rows.length}{" "}
-              processed
-            </p>
           </div>
         )}
 
+        {/* Results Section */}
         {!loading && (validRows.length > 0 || invalidRows.length > 0) && (
-          <motion.div className="w-full max-w-4xl bg-white/60 backdrop-blur-md shadow-md rounded-xl p-8 mb-10">
-            <h2 className="text-3xl font-bold text-blue-700 mb-4 text-center">
-              Validation Results
-            </h2>
-            <details open className="mt-6">
-              <summary className="text-lg font-bold text-green-700 cursor-pointer">
-                <FaCheckCircle className="inline mr-2" /> Valid Data (
-                {validRows.length})
-              </summary>
-              <div className="overflow-x-auto mt-2">
-                <table className="min-w-full bg-white rounded">
-                  <thead>
-                    <tr>
-                      {Object.keys(validRows[0] || {}).map((key) => (
-                        <th key={key} className="px-4 py-2 border">
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {validRows.map((row, i) => (
-                      <tr key={i} className="hover:bg-gray-100">
-                        {Object.values(row).map((val, idx) => (
-                          <td key={idx} className="px-4 py-2 border">
-                            {val}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </details>
+          <motion.div 
+            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h3 className="text-xl font-bold text-gray-800">Validation Results</h3>
+            </div>
 
-            <details className="mt-6">
-              <summary className="text-lg font-bold text-red-700 cursor-pointer">
-                <FaTimesCircle className="inline mr-2" /> Invalid Data (
-                {invalidRows.length})
-              </summary>
-              <div className="overflow-x-auto mt-2">
-                <table className="min-w-full bg-white rounded">
-                  <thead>
-                    <tr>
-                      {Object.keys(invalidRows[0] || {}).map((key) => (
-                        <th key={key} className="px-4 py-2 border">
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invalidRows.map((row, i) => (
-                      <tr key={i} className="hover:bg-red-50">
-                        {Object.entries(row).map(([key, val], idx) => (
-                          <td key={idx} className="px-4 py-2 border">
-                            {key === "errors" ? (
-                              <span className="text-red-500">
-                                {val.join(", ")}
-                              </span>
-                            ) : (
-                              val
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </details>
+            <div className="divide-y divide-gray-200">
+              {/* Valid Records */}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="flex items-center text-lg font-medium text-green-700">
+                    <FaCheckCircle className="mr-2 text-green-500" />
+                    Valid Records ({validRows.length})
+                  </h4>
+                  <span className="bg-green-100 text-green-800 text-xs px-2.5 py-0.5 rounded-full">
+                    Ready for submission
+                  </span>
+                </div>
 
-            <button
-              onClick={handleSave}
-              className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded mt-6 w-full"
-            >
-              <FaSave className="inline mr-2" /> Save to Redis
-            </button>
+                {validRows.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {Object.keys(validRows[0]).map((key) => (
+                            <th
+                              key={key}
+                              scope="col"
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              {key}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {validRows.slice(0, 5).map((row, i) => (
+                          <tr key={i} className="hover:bg-gray-50">
+                            {Object.values(row).map((val, idx) => (
+                              <td
+                                key={idx}
+                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-700"
+                              >
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {validRows.length > 5 && (
+                      <p className="mt-2 text-sm text-gray-500">
+                        Showing first 5 of {validRows.length} valid records
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No valid records found</p>
+                )}
+              </div>
+
+              {/* Invalid Records */}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="flex items-center text-lg font-medium text-red-700">
+                    <FaTimesCircle className="mr-2 text-red-500" />
+                    Invalid Records ({invalidRows.length})
+                  </h4>
+                  <span className="bg-red-100 text-red-800 text-xs px-2.5 py-0.5 rounded-full">
+                    Requires correction
+                  </span>
+                </div>
+
+                {invalidRows.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {Object.keys(invalidRows[0]).filter(key => key !== "errors").map((key) => (
+                            <th
+                              key={key}
+                              scope="col"
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              {key}
+                            </th>
+                          ))}
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Errors
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {invalidRows.slice(0, 5).map((row, i) => (
+                          <tr key={i} className="hover:bg-red-50">
+                            {Object.entries(row).filter(([key]) => key !== "errors").map(([key, val], idx) => (
+                              <td
+                                key={idx}
+                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-700"
+                              >
+                                {val}
+                              </td>
+                            ))}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                              {row.errors.join(", ")}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {invalidRows.length > 5 && (
+                      <p className="mt-2 text-sm text-gray-500">
+                        Showing first 5 of {invalidRows.length} invalid records
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No invalid records found</p>
+                )}
+              </div>
+            </div>
           </motion.div>
         )}
 
-        {savedData && (
+        {/* Cached Data Notification */}
+        {fetching ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center">
+            <svg className="animate-spin -ml-1 mr-4 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-gray-700">Checking for cached data...</span>
+          </div>
+        ) : savedData ? (
           <motion.div
             onClick={() => navigate("/edit-data")}
-            className="cursor-pointer w-full max-w-md bg-white border border-green-400 rounded-lg p-4 shadow-lg mb-10 hover:bg-green-50 transition"
+            className="cursor-pointer bg-white rounded-xl shadow-sm border border-blue-200 p-6 hover:bg-blue-50 transition-colors"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
+            transition={{ delay: 0.5 }}
           >
-            <h3 className="text-lg font-bold text-green-600 mb-2">
-              📦 Cached Data Found
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Click here to edit the cached data from Redis
-            </p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                PostingToBlockchain();
-              }}
-              className="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded w-full"
-            >
-              <FaDatabase className="inline mr-2" /> Post to Blockchain
-            </button>
+            <div className="flex items-start">
+              <div className="flex-shrink-0 bg-blue-100 p-2 rounded-lg">
+                <FaDatabase className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-blue-800 mb-1">
+                  Cached Data Available
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  You have {savedData.length} previously validated records ready for submission.
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/edit-data");
+                    }}
+                    className="text-sm bg-white border border-blue-300 text-blue-700 hover:bg-blue-100 px-3 py-1 rounded-md transition-colors"
+                  >
+                    Review Data
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      PostingToBlockchain();
+                    }}
+                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md transition-colors"
+                  >
+                    Submit Now
+                  </button>
+                </div>
+              </div>
+            </div>
           </motion.div>
-        )}
+        ) : null}
       </main>
+      <Footer/>
     </div>
   );
 };

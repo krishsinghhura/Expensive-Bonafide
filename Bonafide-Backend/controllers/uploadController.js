@@ -21,7 +21,7 @@ const uploadData = async (req, res) => {
       ...row,
       university : univId,
     }))
-    console.log(finalData);
+
     
 
     // Save to Redis with key 'excel_data'
