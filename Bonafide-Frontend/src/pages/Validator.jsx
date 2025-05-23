@@ -11,6 +11,7 @@ import {
   FaExclamationTriangle,
 } from "react-icons/fa";
 import Header from "../components/Header";
+import Footer from "../components/Footer"
 import { motion } from "framer-motion";
 
 const departments = ["BCA", "BSC", "MSC", "MCA", "EEE", "CSE"];
@@ -539,6 +540,7 @@ const Validator = () => {
           </motion.div>
         ) : null}
       </main>
+      <Footer/>
     </div>
   );
 };

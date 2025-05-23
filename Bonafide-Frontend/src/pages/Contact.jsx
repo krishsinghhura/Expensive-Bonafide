@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
+import Footer from "../components/Footer"
 import { FaPaperPlane, FaMapMarkerAlt, FaPhone, FaEnvelope, FaLinkedin, FaTwitter, FaGithub } from "react-icons/fa";
 import { motion } from "framer-motion";
 
@@ -61,8 +62,8 @@ const Contact = () => {
     {
       icon: <FaMapMarkerAlt className="text-2xl text-blue-600" />,
       title: "Our Location",
-      content: "42, Blockchain Street, Tech City, India",
-      link: "https://maps.google.com"
+      content: "CampustoCrypto, CUTM BBSR, Odisha, India",
+      link: "https://maps.app.goo.gl/GvesFMoiYZr4UFvi6"
     },
     {
       icon: <FaPhone className="text-2xl text-blue-600" />,
@@ -314,6 +315,7 @@ const Contact = () => {
           <span className="hidden sm:inline">Quick Email</span>
         </a>
       </motion.div>
+      <Footer/>
     </div>
   );
 };
