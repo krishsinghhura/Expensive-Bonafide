@@ -109,7 +109,7 @@ export default function AuthPage() {
     
     setIsLoading(true);
     
-    const apiBase = "http://localhost:4000/api";
+    const apiBase = "https://bonafide-backend.onrender.com/api";
     
     try {
       if (isSignIn) {

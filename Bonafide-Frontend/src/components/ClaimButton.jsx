@@ -68,7 +68,7 @@ const ClaimEmailNFT = ({ email = "", jsonUrl = "", disabled = false }) => {
     // After successful mint, update backend
     try {
       setStatus("Updating claim status...");
-      const response = await axios.post('http://localhost:4000/api/claim', {
+      const response = await axios.post('https://bonafide-backend.onrender.com/api/claim', {
         email,
         walletAddress: account
       });

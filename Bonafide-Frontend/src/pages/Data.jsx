@@ -28,7 +28,7 @@ export default function Records() {
     const fetchStudentData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:4000/get-data/data", {
+        const response = await axios.get("https://bonafide-backend.onrender.com/get-data/data", {
           withCredentials: true,
         });
         

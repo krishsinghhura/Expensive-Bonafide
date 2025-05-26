@@ -8,7 +8,7 @@ const Hero = () => {
     const fetchStudent = async (req, res) => {
       try {
         const response = await axios.get(
-          "http://localhost:4000/get-data/details",
+          "https://bonafide-backend.onrender.com/get-data/details",
           {
             withCredentials: true,
           }

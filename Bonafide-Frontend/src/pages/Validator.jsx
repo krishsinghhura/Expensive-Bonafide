@@ -132,7 +132,7 @@ const Validator = () => {
 
     setSaving(true);
     try {
-      const response = await fetch("http://localhost:4000/api/upload", {
+      const response = await fetch("https://bonafide-backend.onrender.com/api/upload", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -167,7 +167,7 @@ const Validator = () => {
   const handleFetchFromRedis = async () => {
     setFetching(true);
     try {
-      const response = await fetch("http://localhost:4000/api/fetch", {
+      const response = await fetch("https://bonafide-backend.onrender.com/api/fetch", {
         method: "GET",
         credentials: "include",
       });

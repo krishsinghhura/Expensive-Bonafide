@@ -14,7 +14,7 @@ const EditData = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:4000/api/fetch");
+        const response = await fetch("https://bonafide-backend.onrender.com/api/fetch");
         const result = await response.json();
         if (response.ok) {
           setStudents(result.data);
@@ -39,7 +39,7 @@ const EditData = () => {
   // Save changes to Redis
   const handleSaveChanges = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/upload", {
+      const response = await fetch("https://bonafide-backend.onrender.com/api/upload", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

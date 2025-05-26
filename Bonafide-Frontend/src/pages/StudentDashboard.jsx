@@ -23,7 +23,7 @@ const navigate = useNavigate();
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/get-data/student', {
+        const response = await axios.get('https://bonafide-backend.onrender.com/get-data/student', {
           withCredentials: true
         });
         setStudentData(response.data);

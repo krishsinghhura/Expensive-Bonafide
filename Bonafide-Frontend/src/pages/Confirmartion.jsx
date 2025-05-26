@@ -23,7 +23,7 @@ const ConfirmBlockchainPost = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/fetch", {
+      const response = await fetch("https://bonafide-backend.onrender.com/api/fetch", {
         method: "GET",
         credentials: "include",
       });
