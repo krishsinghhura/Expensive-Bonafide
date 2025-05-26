@@ -109,7 +109,7 @@ export default function AuthPage() {
     
     setIsLoading(true);
     
-    const apiBase = "https://bonafide-backend.onrender.com/api";
+    const apiBase = "https://expensive-bonafide-production.up.railway.app/api";
     
     try {
       if (isSignIn) {
