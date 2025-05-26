@@ -11,8 +11,8 @@ import {
   FaExclamationTriangle,
 } from "react-icons/fa";
 import Header from "../components/Header";
-import Footer from "../components/Footer"
-import Cookies from 'js-cookie';
+import Footer from "../components/Footer";
+import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 
 const departments = ["BCA", "BSC", "MSC", "MCA", "EEE", "CSE"];
@@ -27,15 +27,16 @@ const Validator = () => {
   const [progress, setProgress] = useState(0);
   const [savedData, setSavedData] = useState(null);
   const [alert, setAlert] = useState(null);
+  const [dataSaved, setDataSaved] = useState(false);
 
   const navigate = useNavigate();
-  useEffect(()=>{
-    const token=Cookies.get("token");
+  useEffect(() => {
+    const token = Cookies.get("token");
 
-    if(!token){
+    if (!token) {
       navigate("/auth");
     }
-  },[])
+  }, []);
 
   const validateRow = (row) => {
     const errors = [];
@@ -64,9 +65,12 @@ const Validator = () => {
         const workbook = XLSX.read(data, { type: "binary" });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(worksheet);
-        
+
         if (json.length === 0) {
-          setAlert({ type: "error", message: "The uploaded file contains no data" });
+          setAlert({
+            type: "error",
+            message: "The uploaded file contains no data",
+          });
           return;
         }
 
@@ -74,11 +78,11 @@ const Validator = () => {
         setLoading(true);
         setValidRows([]);
         setInvalidRows([]);
-        
+
         const tempValid = [];
         const tempInvalid = [];
         let count = 0;
-        
+
         const interval = setInterval(() => {
           if (count < json.length) {
             const row = json[count];
@@ -92,7 +96,7 @@ const Validator = () => {
             setValidRows(tempValid);
             setInvalidRows(tempInvalid);
             setLoading(false);
-            
+
             if (tempInvalid.length > 0) {
               setAlert({
                 type: "warning",
@@ -103,12 +107,18 @@ const Validator = () => {
         }, 2000 / json.length);
       } catch (error) {
         console.error("Error processing file:", error);
-        setAlert({ type: "error", message: "Error processing Excel file. Please check the format." });
+        setAlert({
+          type: "error",
+          message: "Error processing Excel file. Please check the format.",
+        });
         setLoading(false);
       }
     };
     reader.onerror = () => {
-      setAlert({ type: "error", message: "Error reading file. Please try again." });
+      setAlert({
+        type: "error",
+        message: "Error reading file. Please try again.",
+      });
       setLoading(false);
     };
     reader.readAsBinaryString(file);
@@ -128,7 +138,7 @@ const Validator = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: validRows }),
       });
-      
+
       const result = await response.json();
       if (response.ok) {
         setAlert({
@@ -136,6 +146,7 @@ const Validator = () => {
           message: `${validRows.length} records successfully cached to Redis!`,
         });
         setSavedData(validRows);
+        setDataSaved(true); // Mark data as saved
       } else {
         setAlert({
           type: "error",
@@ -158,7 +169,7 @@ const Validator = () => {
     try {
       const response = await fetch("http://localhost:4000/api/fetch", {
         method: "GET",
-        credentials: "include", 
+        credentials: "include",
       });
       const result = await response.json();
       if (response.ok && result.data?.length > 0) {
@@ -174,7 +185,10 @@ const Validator = () => {
 
   const PostingToBlockchain = () => {
     if (!savedData || savedData.length === 0) {
-      setAlert({ type: "warning", message: "No validated data available to post" });
+      setAlert({
+        type: "warning",
+        message: "No validated data available to post",
+      });
       return;
     }
     navigate("/confirmation");
@@ -230,7 +244,7 @@ const Validator = () => {
             <h2 className="text-2xl font-bold text-blue-800 mb-4">
               Data Validation Guidelines
             </h2>
-            
+
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-blue-700 mb-2 flex items-center">
                 <FaInfoCircle className="mr-2 text-blue-500" />
@@ -238,30 +252,42 @@ const Validator = () => {
               </h3>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">EMAIL</span>
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">
+                    EMAIL
+                  </span>
                   <span>Valid email format (user@domain.com)</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">AADHAR NUMBER</span>
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">
+                    AADHAR NUMBER
+                  </span>
                   <span>Exactly 12 digits</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">REGISTRATION NUMBER</span>
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">
+                    REGISTRATION NUMBER
+                  </span>
                   <span>Exactly 12 digits</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">DEPARTMENT</span>
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">
+                    DEPARTMENT
+                  </span>
                   <span>One of: {departments.join(", ")}</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">CGPA</span>
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">
+                    CGPA
+                  </span>
                   <span>Number between 0 and 10</span>
                 </li>
               </ul>
             </div>
 
             <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r">
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">Best Practices</h3>
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                Best Practices
+              </h3>
               <ul className="text-sm text-gray-700 space-y-1">
                 <li>• Ensure consistent formatting in your Excel file</li>
                 <li>• Remove any empty rows before uploading</li>
@@ -276,7 +302,7 @@ const Validator = () => {
             <h2 className="text-2xl font-bold text-blue-800 mb-4">
               Upload Student Data
             </h2>
-            
+
             <div className="mb-6">
               <label
                 htmlFor="file-upload"
@@ -286,8 +312,12 @@ const Validator = () => {
                 <p className="text-lg font-medium text-blue-700 mb-1">
                   Drag & Drop Excel File Here
                 </p>
-                <p className="text-sm text-gray-500">or click to browse files</p>
-                <p className="text-xs text-gray-400 mt-2">Supports .xlsx, .xls</p>
+                <p className="text-sm text-gray-500">
+                  or click to browse files
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Supports .xlsx, .xls
+                </p>
               </label>
               <input
                 id="file-upload"
@@ -301,20 +331,40 @@ const Validator = () => {
             <div className="flex space-x-4">
               <button
                 onClick={handleSave}
-                disabled={validRows.length === 0 || saving}
+                disabled={validRows.length === 0 || saving || dataSaved}
                 className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg font-medium transition-colors ${
-                  validRows.length === 0 || saving
+                  validRows.length === 0 || saving || dataSaved
                     ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700 text-white"
                 }`}
               >
                 {saving ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Processing...
+                  </>
+                ) : dataSaved ? (
+                  <>
+                    <FaSave className="mr-2" /> Data saved
                   </>
                 ) : (
                   <>
@@ -342,18 +392,37 @@ const Validator = () => {
         {loading && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
             <div className="flex items-center">
-              <svg className="animate-spin -ml-1 mr-4 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-4 h-8 w-8 text-blue-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-800">Validating Student Records</h3>
+                <h3 className="text-lg font-medium text-gray-800">
+                  Validating Student Records
+                </h3>
                 <p className="text-sm text-gray-500">
-                  Processed {Math.floor(rows.length * (progress / 100))} of {rows.length} records ({progress}%)
+                  Processed {Math.floor(rows.length * (progress / 100))} of{" "}
+                  {rows.length} records ({progress}%)
                 </p>
                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                  <div 
-                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                  <div
+                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -364,14 +433,16 @@ const Validator = () => {
 
         {/* Results Section */}
         {!loading && (validRows.length > 0 || invalidRows.length > 0) && (
-          <motion.div 
+          <motion.div
             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
             <div className="border-b border-gray-200 px-6 py-4">
-              <h3 className="text-xl font-bold text-gray-800">Validation Results</h3>
+              <h3 className="text-xl font-bold text-gray-800">
+                Validation Results
+              </h3>
             </div>
 
             <div className="divide-y divide-gray-200">
@@ -425,7 +496,9 @@ const Validator = () => {
                     )}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm">No valid records found</p>
+                  <p className="text-gray-500 text-sm">
+                    No valid records found
+                  </p>
                 )}
               </div>
 
@@ -446,15 +519,17 @@ const Validator = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          {Object.keys(invalidRows[0]).filter(key => key !== "errors").map((key) => (
-                            <th
-                              key={key}
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              {key}
-                            </th>
-                          ))}
+                          {Object.keys(invalidRows[0])
+                            .filter((key) => key !== "errors")
+                            .map((key) => (
+                              <th
+                                key={key}
+                                scope="col"
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                {key}
+                              </th>
+                            ))}
                           <th
                             scope="col"
                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -466,14 +541,16 @@ const Validator = () => {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {invalidRows.slice(0, 5).map((row, i) => (
                           <tr key={i} className="hover:bg-red-50">
-                            {Object.entries(row).filter(([key]) => key !== "errors").map(([key, val], idx) => (
-                              <td
-                                key={idx}
-                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-700"
-                              >
-                                {val}
-                              </td>
-                            ))}
+                            {Object.entries(row)
+                              .filter(([key]) => key !== "errors")
+                              .map(([key, val], idx) => (
+                                <td
+                                  key={idx}
+                                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-700"
+                                >
+                                  {val}
+                                </td>
+                              ))}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
                               {row.errors.join(", ")}
                             </td>
@@ -488,7 +565,9 @@ const Validator = () => {
                     )}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm">No invalid records found</p>
+                  <p className="text-gray-500 text-sm">
+                    No invalid records found
+                  </p>
                 )}
               </div>
             </div>
@@ -498,9 +577,25 @@ const Validator = () => {
         {/* Cached Data Notification */}
         {fetching ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center">
-            <svg className="animate-spin -ml-1 mr-4 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg
+              className="animate-spin -ml-1 mr-4 h-5 w-5 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
             <span className="text-gray-700">Checking for cached data...</span>
           </div>
@@ -521,7 +616,8 @@ const Validator = () => {
                   Cached Data Available
                 </h3>
                 <p className="text-sm text-gray-600 mb-3">
-                  You have {savedData.length} previously validated records ready for submission.
+                  You have {savedData.length} previously validated records ready
+                  for submission.
                 </p>
                 <div className="flex space-x-3">
                   <button
@@ -548,7 +644,7 @@ const Validator = () => {
           </motion.div>
         ) : null}
       </main>
-      <Footer/>
+      <Footer />
     </div>
   );
 };

@@ -28,7 +28,7 @@ export default function AuthPage() {
     if (studentToken) {
       navigate("/student-dashboard");
     } else if (universityToken) {
-      navigate("/");
+      navigate("/data");
     }
   }, [navigate]);
 
@@ -131,7 +131,7 @@ export default function AuthPage() {
           navigate("/student-dashboard", { state: response.data });
         } else {
           Cookies.set("token", response.data.token, cookieOptions);
-          navigate("/");
+          navigate("/data");
         }
       } else {
         // Register logic
@@ -155,10 +155,10 @@ export default function AuthPage() {
         
         if (userType === "student") {
           Cookies.set("token", response.data.token, cookieOptions);
-          navigate("/student-dashboard", { state: response.data });
+          // navigate("/student-dashboard", { state: response.data });
         } else {
           Cookies.set("token", response.data.token, cookieOptions);
-          navigate("/");
+          navigate("/data");
         }
       }
     } catch (error) {

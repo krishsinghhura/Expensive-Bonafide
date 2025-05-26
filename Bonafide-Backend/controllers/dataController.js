@@ -20,25 +20,24 @@ const getDataForUser = async (req, res) => {
         const parsedData = JSON.parse(redisData);
         console.log(parsedData);
         
-        // Safely filter data for the current university
-        data = parsedData.filter((entry) => {
-          // Check if entry exists and has univ_token property
-          if (!entry || !entry.university) return false;
-
-          // Compare university IDs
-          const entryUnivId = entry.university.toString
-            ? entry.university.toString()
-            : String(entry.university);
-
-          return entryUnivId === univId;
-        });
+        // Safely filter and normalize data for the current university
+        data = parsedData
+          .filter((entry) => {
+            if (!entry || !entry.university) return false;
+            const entryUnivId = entry.university.toString
+              ? entry.university.toString()
+              : String(entry.university);
+            return entryUnivId === univId;
+          })
+          .map(normalizeRedisData); // Normalize each entry
+          
         fromRedis = true;
       } catch (parseError) {
         console.error("Error parsing Redis data:", parseError);
-        // Continue with database query if Redis data is malformed
       }
     }
-    console.log("Quering database for data for",req.user.id);
+    
+    console.log("Querying database for data for", req.user.id);
     
     // If not found in Redis or empty results, query database
     if (!fromRedis || data.length === 0) {
@@ -61,6 +60,27 @@ const getDataForUser = async (req, res) => {
     });
   }
 };
+
+// Helper function to normalize Redis data to match MongoDB schema
+function normalizeRedisData(redisEntry) {
+  return {
+    university: redisEntry.university,
+    name: redisEntry.NAME || redisEntry.name,
+    email: redisEntry.EMAIL || redisEntry.email,
+    aadhar_number: redisEntry['AADHAR NUMBER'] || redisEntry.aadhar_number,
+    registration_number: redisEntry['REGISTRATION NUMBER'] || redisEntry.registration_number,
+    walletAddress: redisEntry.walletAddress,
+    CertificateUrl: redisEntry.CertificateUrl,
+    JsonUrl: redisEntry.JSONUrl || redisEntry.JsonUrl,
+    department: redisEntry.DEPARTMENT || redisEntry.department,
+    cgpa: redisEntry.CGPA || redisEntry.cgpa,
+    blockchainTxnHash: redisEntry.blockchainTxnHash,
+    claimed: redisEntry.claimed || false,
+    createdAt: redisEntry.createdAt || new Date(),
+    updatedAt: redisEntry.updatedAt || new Date(),
+    // Add any other fields that might be in your MongoDB schema
+  };
+}
 
 const getAuthenticatedUserDetails = async (req,res) => {
   const id = req.user.id;

@@ -2,6 +2,7 @@
 const University = require('../model/University');
 const redis = require('../redis/redisClient');
 const jwt = require('jsonwebtoken');
+const Data=require("../model/data");
 
 
 const uploadData = async (req, res) => {
@@ -39,14 +40,30 @@ const uploadData = async (req, res) => {
 
 const getDataFromRedis = async (req, res) => {
   try {
-    const data = await redis.get("excel_data");
-
     const univId = req.user.id;
-    console.log("univId is ",univId);
+    console.log("univId is ", univId);
     
-    res.json({ data: JSON.parse(data || '[]') });
+    // First try to get data from Redis
+    const redisData = await redis.get("excel_data");
+    
+    if (redisData) {
+      return res.json({ data: JSON.parse(redisData), source: 'redis' });
+    }
+    
+    // If not in Redis, fetch from MongoDB
+    const mongoData = await Data.find({ userId: univId }); // Adjust query as needed
+    
+    // Store the data in Redis for future requests (optional)
+    if (mongoData) {
+      await redis.set("excel_data", JSON.stringify(mongoData));
+      // You might want to set an expiration time
+      // await redis.setex("excel_data", 3600, JSON.stringify(mongoData));
+    }
+    
+    res.json({ data: mongoData || [], source: 'mongo' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch from Redis' });
+    console.error('Error fetching data:', err);
+    res.status(500).json({ error: 'Failed to fetch data' });
   }
 };
 

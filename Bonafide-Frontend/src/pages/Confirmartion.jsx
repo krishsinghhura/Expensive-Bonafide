@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { uploadMerkleRoot } from "../utils/uploadMerkleRoot";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Cookies from "js-cookie";
@@ -64,21 +63,13 @@ const ConfirmBlockchainPost = () => {
       const result = await response.json();
 
       if (response.ok) {
-        const merkleRoot = result.merkleRoot;
+        const done = result.data;
 
-        if (!merkleRoot) {
-          alert("❌ No Merkle root returned from backend.");
+        if (!done) {
+          alert("❌no data in backend.");
           clearInterval(interval);
           setIsCounting(false);
           return;
-        }
-
-        const blockchainSuccess = await uploadMerkleRoot(merkleRoot);
-        if (blockchainSuccess) {
-          alert("✅ Data confirmed and Merkle root stored on blockchain!");
-          navigate("/validate");
-        } else {
-          alert("❌ Merkle root failed to upload to blockchain.");
         }
       } else {
         alert(`❌ Failed to post: ${result.error}`);

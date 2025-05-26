@@ -1,4 +1,4 @@
-const data = require("../model/Data");
+const data = require("../model/data");
 const Student = require("../model/Student");
 const redisClient = require("../redis/redisClient");
 
