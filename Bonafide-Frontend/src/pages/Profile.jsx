@@ -1,41 +1,51 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { FaEdit, FaUnlockAlt, FaCheckCircle, FaDownload } from 'react-icons/fa';
+import axios from "axios";
+import { FaEdit, FaUnlockAlt, FaCheckCircle, FaDownload } from "react-icons/fa";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState({ name: '', email: '', role: 'Student' });
+  const [user, setUser] = useState({ name: "", email: "", role: "Student" });
 
   useEffect(() => {
-    const token = Cookies.get("token");
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:4000/get-data/details",
+          {
+            withCredentials: true,
+          }
+        );
 
-    if (!token) {
-      navigate("/auth");
-    }
+        const data = response.data.university || response.data.Student;
 
-    const name = Cookies.get("name");
-    const email = Cookies.get("email");
-    const role = Cookies.get("role") || "Student";
-    const lastLogin = Cookies.get("lastLogin") || new Date().toLocaleString();
 
-    setUser({ name, email, role, lastLogin, twoFA: false });
+        setUser({
+          name: data.name,
+          email: data.email,
+          role:
+            data.role || (response.data.university ? "University" : "Student"),
+          lastLogin: Cookies.get("lastLogin") || new Date().toLocaleString(),
+          twoFA: data.twoFA || false,
+        });
+      } catch (err) {
+        console.error("Failed to fetch user details:", err);
+      }
+    };
+
+    fetchUser();
   }, []);
 
   const handleLogout = () => {
-    Cookies.remove('token');
-    Cookies.remove('name');
-    Cookies.remove('email');
-    Cookies.remove('role');
-    Cookies.remove('lastLogin');
-    navigate('/auth');
+    Cookies.remove("token");
+    navigate("/auth");
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-white transition-all duration-300">
-      
       {/* Floating Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-2xl">
         <Header />
@@ -57,23 +67,36 @@ const Profile = () => {
 
             <div className="flex-1 space-y-4 w-full">
               <div>
-                <label className="block text-sm font-medium text-blue-700">Full Name</label>
-                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">{user.name}</p>
+                <label className="block text-sm font-medium text-blue-700">
+                  Full Name
+                </label>
+                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">
+                  {user.name}
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-blue-700">Email Address</label>
-                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">{user.email}</p>
+                <label className="block text-sm font-medium text-blue-700">
+                  Email Address
+                </label>
+                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">
+                  {user.email}
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-blue-700">Role</label>
-                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">{user.role}</p>
+                <label className="block text-sm font-medium text-blue-700">
+                  Role
+                </label>
+                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">
+                  {user.role}
+                </p>
               </div>
 
               <div className="flex flex-wrap gap-4 mt-4">
                 <div className="bg-white/40 text-blue-800 px-4 py-2 rounded-xl shadow text-sm flex items-center gap-2">
-                  <FaCheckCircle className="text-green-600" /> Last Login: {user.lastLogin}
+                  <FaCheckCircle className="text-green-600" /> Last Login:{" "}
+                  {user.lastLogin}
                 </div>
                 <div className="bg-white/40 text-blue-800 px-4 py-2 rounded-xl shadow text-sm flex items-center gap-2">
                   <FaUnlockAlt className="text-yellow-600" />
@@ -92,7 +115,7 @@ const Profile = () => {
             </button>
             <button
               className="flex items-center justify-center gap-2 bg-white/40 hover:bg-white/60 text-blue-800 px-5 py-3 rounded-xl shadow transition"
-              onClick={() => navigate('/verify-student')}
+              onClick={() => navigate("/verify-student")}
             >
               <FaCheckCircle /> Verify Achievements
             </button>
@@ -103,7 +126,7 @@ const Profile = () => {
 
           <div className="flex justify-between items-center">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="px-5 py-2 rounded-xl bg-white/50 hover:bg-white text-blue-800 font-medium shadow-md transition duration-300"
             >
               Back to Home

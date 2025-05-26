@@ -16,7 +16,7 @@ const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 // Smart Contract Instance
 const contract = new ethers.Contract(
-  "0x0c99df73fB87c46EaA7666CeCfeAA6E758355329",
+  "0x89896597450A9241F716996e16838279d362ac54",
   abi,
   signer
 );

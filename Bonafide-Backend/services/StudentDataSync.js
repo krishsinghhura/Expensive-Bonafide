@@ -16,6 +16,7 @@ const populateStudentDetails = async (email) => {
     const updatedStudent = await Student.findOneAndUpdate(
       { email },
       {
+        name:data.name,
         aadhar_number: data.aadhar_number,
         registration_number: data.registration_number,
         department: data.department,

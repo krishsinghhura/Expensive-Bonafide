@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import ABI from "./abi.json";
 
-const CONTRACT_ADDRESS = "0x0c99df73fB87c46EaA7666CeCfeAA6E758355329";
+const CONTRACT_ADDRESS = "0x89896597450A9241F716996e16838279d362ac54";
 
 const ClaimEmailNFT = ({ email = "", jsonUrl = "", disabled = false }) => {
   const [status, setStatus] = useState("");

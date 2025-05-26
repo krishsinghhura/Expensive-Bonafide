@@ -1,4 +1,3 @@
-// pages/analytics.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Menu from "../components/Univ_Menu";
@@ -14,38 +13,51 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  ResponsiveContainer
 } from "recharts";
+import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
-const COLORS = ["#38b2ac", "#f56565"];
+const COLORS = ["#3182ce", "#e53e3e", "#38a169", "#d69e2e", "#805ad5"];
 
 export default function Analytics() {
   const [barData, setBarData] = useState([]);
   const [pieData, setPieData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (!token) {
+      navigate("/auth");
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
+        setLoading(true);
         const response = await axios.get("http://localhost:4000/get-data/data", {
-          withCredentials: true, // sends cookies for auth
+          withCredentials: true,
         });
 
         const students = response.data.data;
-        console.log(students);
-        
 
         const departmentMap = {};
         let verified = 0;
         let unverified = 0;
 
         students.forEach((student) => {
-          const dept = student.department || "Unknown";
-          const isVerified = student.claimed;
+          const dept = student.DEPARTMENT || "Unknown";
+          const isVerified = Boolean(student.blockchainTxnHash);
 
           if (!departmentMap[dept]) {
             departmentMap[dept] = {
               name: dept,
               Verified: 0,
               Unverified: 0,
+              total: 0
             };
           }
 
@@ -56,15 +68,24 @@ export default function Analytics() {
             departmentMap[dept].Unverified += 1;
             unverified += 1;
           }
+          departmentMap[dept].total += 1;
         });
 
-        setBarData(Object.values(departmentMap));
+        // Sort departments by total students
+        const sortedDepartments = Object.values(departmentMap).sort(
+          (a, b) => b.total - a.total
+        );
+
+        setBarData(sortedDepartments);
         setPieData([
           { name: "Verified", value: verified },
           { name: "Unverified", value: unverified },
         ]);
+        setLoading(false);
       } catch (err) {
         console.error("Failed to fetch analytics:", err);
+        setError("Failed to load analytics data. Please try again later.");
+        setLoading(false);
       }
     };
 
@@ -72,53 +93,205 @@ export default function Analytics() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-black">
+    <div className="flex min-h-screen bg-white">
       <Menu />
       <div className="ml-64 flex-1 flex flex-col">
         <Header />
-        <main className="p-6 space-y-10 flex-grow">
-          <h2 className="text-2xl font-bold">📊 Student Analytics Overview</h2>
+        <main className="p-8 flex-grow">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-blue-800">Student Analytics Dashboard</h2>
+            <p className="text-gray-600">Visual insights into student verification status</p>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Bar Chart */}
-            <div className="bg-white rounded-lg p-6 shadow-2xl">
-              <h3 className="text-lg font-semibold mb-4">Department Verification Summary</h3>
-              <BarChart width={450} height={300} data={barData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="Verified" fill="#38b2ac" />
-                <Bar dataKey="Unverified" fill="#f56565" />
-              </BarChart>
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
+          ) : error ? (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          ) : (
+            <div className="space-y-10">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-blue-50 rounded-lg p-6 border border-blue-100">
+                  <h3 className="text-sm font-medium text-blue-800 uppercase tracking-wider">
+                    Total Students
+                  </h3>
+                  <p className="mt-2 text-3xl font-semibold text-blue-600">
+                    {barData.reduce((sum, dept) => sum + dept.total, 0)}
+                  </p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-6 border border-green-100">
+                  <h3 className="text-sm font-medium text-green-800 uppercase tracking-wider">
+                    Verified Students
+                  </h3>
+                  <p className="mt-2 text-3xl font-semibold text-green-600">
+                    {pieData[0]?.value || 0}
+                  </p>
+                </div>
+                <div className="bg-red-50 rounded-lg p-6 border border-red-100">
+                  <h3 className="text-sm font-medium text-red-800 uppercase tracking-wider">
+                    Unverified Students
+                  </h3>
+                  <p className="mt-2 text-3xl font-semibold text-red-600">
+                    {pieData[1]?.value || 0}
+                  </p>
+                </div>
+              </div>
 
-            {/* Pie Chart */}
-            <div className="bg-white rounded-lg p-6 shadow-2xl flex justify-center">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Overall Verification Ratio</h3>
-                <PieChart width={300} height={300}>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
-                    }
-                    outerRadius={100}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Bar Chart */}
+                <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                    Verification by Department
+                  </h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={barData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                      >
+                        <XAxis 
+                          dataKey="name" 
+                          angle={-45} 
+                          textAnchor="end"
+                          height={70}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '0.375rem',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="Verified" fill="#3182ce" name="Verified" />
+                        <Bar dataKey="Unverified" fill="#e53e3e" name="Unverified" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Pie Chart */}
+                <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                    Overall Verification Status
+                  </h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) =>
+                            `${name}: ${(percent * 100).toFixed(0)}%`
+                          }
+                          outerRadius={80}
+                          innerRadius={40}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => [`${value} students`, 'Count']}
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '0.375rem',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
+                        />
+                        <Legend 
+                          layout="horizontal" 
+                          verticalAlign="bottom"
+                          align="center"
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              {/* Department Table */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                  <h3 className="text-lg font-semibold text-blue-800">
+                    Department Statistics
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-blue-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
+                          Department
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
+                          Total Students
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
+                          Verified
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
+                          Unverified
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
+                          Verification Rate
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {barData.map((dept, index) => (
+                        <tr key={index} className="hover:bg-blue-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {dept.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {dept.total}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {dept.Verified}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {dept.Unverified}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex items-center">
+                              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                <div
+                                  className="bg-blue-600 h-2.5 rounded-full"
+                                  style={{
+                                    width: `${(dept.Verified / dept.total) * 100}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="ml-2 text-xs font-medium">
+                                {Math.round((dept.Verified / dept.total) * 100)}%
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </main>
         <Footer />
       </div>

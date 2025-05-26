@@ -4,7 +4,7 @@ const redisClient = require("../redis/redisClient");
 
 const getStudentProfile = async (req, res) => {
   try {
-    const studentId = req.student.id;
+    const studentId = req.user.id;
     console.log("Student ID:", studentId);
     
     if (!studentId) {

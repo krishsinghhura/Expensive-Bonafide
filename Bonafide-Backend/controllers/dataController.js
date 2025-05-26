@@ -18,15 +18,17 @@ const getDataForUser = async (req, res) => {
     if (redisData) {
       try {
         const parsedData = JSON.parse(redisData);
+        console.log(parsedData);
+        
         // Safely filter data for the current university
         data = parsedData.filter((entry) => {
           // Check if entry exists and has univ_token property
-          if (!entry || !entry.univ_token) return false;
+          if (!entry || !entry.university) return false;
 
           // Compare university IDs
-          const entryUnivId = entry.univ_token.toString
-            ? entry.univ_token.toString()
-            : String(entry.univ_token);
+          const entryUnivId = entry.university.toString
+            ? entry.university.toString()
+            : String(entry.university);
 
           return entryUnivId === univId;
         });

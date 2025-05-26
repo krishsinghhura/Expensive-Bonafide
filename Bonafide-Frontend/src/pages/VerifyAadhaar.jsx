@@ -65,7 +65,9 @@ export default function StudentVerifier() {
         setResult(response.data);
         setIsDialogOpen(false);
       }
+      console.log(response);
       console.log(response.data.certificateUrl);
+      
       
     } catch (err) {
       console.error("Verification error:", err);

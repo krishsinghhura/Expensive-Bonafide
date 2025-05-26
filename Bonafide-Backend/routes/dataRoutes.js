@@ -9,6 +9,6 @@ const router = express.Router();
 // Route to sync data to the blockchain
 router.get('/data', univMiddleware ,  getDataForUser);
 router.get('/details',univMiddleware,getAuthenticatedUserDetails)
-router.get('/student',getStudentProfile);
+router.get('/student',univMiddleware,getStudentProfile);
 
 module.exports = router;

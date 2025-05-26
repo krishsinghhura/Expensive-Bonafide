@@ -1,5 +1,4 @@
 const Data = require("../model/data"); // Adjust the path if needed
-const Student = require("../model/Student");
 const redis = require("../redis/redisClient");
 
 const verifyStudent = async (req, res) => {
@@ -44,7 +43,7 @@ const verifyStudent = async (req, res) => {
       certificateUrl = student.CertificateUrl;
       jsonUrl = student.JSONUrl;
     } else {
-      const studentWithCert = await Student.findOne({ email });
+      const studentWithCert = await Data.findOne({ email });
       name = studentWithCert?.name || null;
       certificateUrl = studentWithCert?.CertificateUrl || null;
       jsonUrl = studentWithCert?.JSONUrl || null;

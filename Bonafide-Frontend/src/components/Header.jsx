@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import Cookies from "js-cookies"
+import Cookies from "js-cookie";
 
 const Header = () => {
   // Active link style
