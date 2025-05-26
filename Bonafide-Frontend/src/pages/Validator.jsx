@@ -134,7 +134,7 @@ const Validator = () => {
     try {
       const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/upload", {
         method: "POST",
-        // credentials: "include",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: validRows }),
       });
@@ -169,7 +169,7 @@ const Validator = () => {
     try {
       const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/fetch", {
         method: "GET",
-        // credentials: "include",
+        credentials: "include",
       });
       const result = await response.json();
       if (response.ok && result.data?.length > 0) {
