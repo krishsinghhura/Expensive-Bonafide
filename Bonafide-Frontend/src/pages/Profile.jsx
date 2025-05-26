@@ -14,7 +14,7 @@ const Profile = () => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(
-          "https://bonafide-backend.onrender.com/get-data/details",
+          "https://expensive-bonafide-production.up.railway.app/get-data/details",
           {
             withCredentials: true,
           }

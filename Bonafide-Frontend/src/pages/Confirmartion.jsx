@@ -23,7 +23,7 @@ const ConfirmBlockchainPost = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("https://bonafide-backend.onrender.com/api/fetch", {
+      const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/fetch", {
         method: "GET",
         credentials: "include",
       });
@@ -56,7 +56,7 @@ const ConfirmBlockchainPost = () => {
     }, 11000);
 
     try {
-      const response = await fetch("http://localhost:4000/block/upload-email", {
+      const response = await fetch("https://expensive-bonafide-production.up.railway.app/upload-email", {
         method: "GET",
       });
 
