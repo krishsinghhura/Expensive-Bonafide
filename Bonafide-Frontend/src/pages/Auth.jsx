@@ -154,7 +154,7 @@ export default function AuthPage() {
         };
         
         if (userType === "student") {
-          Cookies.set("StudentToken", response.data.token, cookieOptions);
+          Cookies.set("token", response.data.token, cookieOptions);
           navigate("/student-dashboard", { state: response.data });
         } else {
           Cookies.set("token", response.data.token, cookieOptions);

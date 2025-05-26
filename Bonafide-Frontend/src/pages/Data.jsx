@@ -33,23 +33,26 @@ export default function Records() {
         });
         
         const records = response.data.data;
+        console.log("Fetched records:", records);
         
         // Process data to extract departments and academic years
         const deptSet = new Set();
         const yearSet = new Set();
         
         records.forEach((student) => {
-          deptSet.add(student.DEPARTMENT);
+          if (student.department) {
+            deptSet.add(student.department);
+          }
           
           if (student.createdAt) {
             const date = new Date(student.createdAt);
             const year = date.getFullYear();
-            const academicYear = `${year}-${String((year + 1) % 100).padStart(2, "0")}`;
+            const academicYear = `${year}-${String(year + 1).slice(-2)}`;
             yearSet.add(academicYear);
           }
         });
 
-        const sortedYears = Array.from(yearSet).sort().reverse();
+        const sortedYears = Array.from(yearSet).sort((a, b) => b.localeCompare(a));
         const sortedDepts = Array.from(deptSet).sort();
 
         setAcademicYears(sortedYears);
@@ -68,163 +71,223 @@ export default function Records() {
   }, []);
 
   const handleDeptClick = (dept) => {
-    setSelectedDept(dept);
+    setSelectedDept(selectedDept === dept ? "" : dept);
     setSearchQuery("");
   };
 
+  const handleYearClick = (year) => {
+    setSelectedYear(selectedYear === year ? "" : year);
+  };
+
   const filteredData = studentData.filter((student) => {
-    if (selectedDept && student.DEPARTMENT !== selectedDept) return false;
+    // Filter by department if selected
+    if (selectedDept && student.department !== selectedDept) return false;
     
-    if (selectedYear) {
-      if (!student.createdAt) return false;
+    // Filter by academic year if selected
+    if (selectedYear && student.createdAt) {
       const date = new Date(student.createdAt);
       const year = date.getFullYear();
-      const academicYear = `${year}-${String((year + 1) % 100).padStart(2, "0")}`;
+      const academicYear = `${year}-${String(year + 1).slice(-2)}`;
       if (academicYear !== selectedYear) return false;
     }
     
-    const searchString = [
-      student.NAME,
-      student.EMAIL,
-      student["REGISTRATION NUMBER"],
-      student.DEPARTMENT,
-      selectedYear,
-    ].join(" ").toLowerCase();
+    // Filter by search query
+    if (searchQuery) {
+      const searchString = [
+        student.name,
+        student.email,
+        student.registration_number || "",
+        student.department || "",
+      ].join(" ").toLowerCase();
+      
+      return searchString.includes(searchQuery.toLowerCase());
+    }
     
-    return searchString.includes(searchQuery.toLowerCase());
+    return true;
   });
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleView = (student) => {
+    // Implement view functionality
+    console.log("View student:", student);
+    // You might want to navigate to a detailed view or show a modal
+  };
+
+  const handleDownload = (student) => {
+    // Implement download functionality
+    console.log("Download student data:", student);
+    if (student.CertificateUrl) {
+      window.open(student.CertificateUrl, '_blank');
+    }
+  };
+
   return (
-    <div className="flex bg-white min-h-screen">
+    <div className="flex bg-gray-50 min-h-screen">
       <Menu />
-      <div className="ml-64 flex-1 flex flex-col justify-between">
+      <div className="ml-64 flex-1 flex flex-col">
         <Header />
-        <main className="flex-grow flex flex-col p-6">
+        <main className="flex-grow p-6">
           {loading ? (
-            <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
             </div>
           ) : error ? (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-              {error}
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              </div>
             </div>
           ) : (
             <>
-              {/* Academic Year Filter */}
-              <div className="bg-blue-50 rounded-lg p-4 mb-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-blue-800 mb-3">Academic Year</h2>
-                <div className="flex flex-wrap gap-2">
-                  {academicYears.map((year, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedYear(year)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedYear === year
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-blue-600 border border-blue-200 hover:bg-blue-50"
-                      }`}
-                    >
-                      {year}
-                    </button>
-                  ))}
+              {/* Filters Section */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
+                <div className="p-4 border-b border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
                 </div>
-              </div>
-
-              {/* Department Selection */}
-              <div className="bg-blue-50 rounded-lg p-4 mb-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-blue-800 mb-3">Departments</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {departments.map((dept, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => handleDeptClick(dept)}
-                      className={`p-4 bg-white rounded-lg cursor-pointer transition-all shadow-sm border ${
-                        selectedDept === dept 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                    >
-                      <h3 className="font-medium text-blue-700">{dept}</h3>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Search and Results Section */}
-              {(selectedDept || selectedYear) && (
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-gray-200 bg-blue-50">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <h2 className="text-xl font-semibold text-blue-800">
-                        {selectedDept && `${selectedDept} `}
-                        {selectedYear && `${selectedYear} `}
-                        Students
-                      </h2>
-                      <div className="relative w-full md:w-96">
-                        <input
-                          type="text"
-                          placeholder="Search students..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <svg
-                          className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
+                
+                {/* Academic Year Filter */}
+                {academicYears.length > 0 && (
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Academic Year</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {academicYears.map((year, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleYearClick(year)}
+                          className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                            selectedYear === year
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                          />
-                        </svg>
-                      </div>
+                          {year}
+                        </button>
+                      ))}
                     </div>
                   </div>
+                )}
 
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-blue-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
-                            Name
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
-                            Email
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
-                            Reg No.
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
-                            CGPA
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredData.length > 0 ? (
-                          filteredData.map((student, idx) => (
-                            <tr key={idx} className="hover:bg-blue-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {student.NAME}
+                {/* Department Filter */}
+                {departments.length > 0 && (
+                  <div className="p-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Departments</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                      {departments.map((dept, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleDeptClick(dept)}
+                          className={`p-3 rounded-md text-sm font-medium transition-all text-left truncate ${
+                            selectedDept === dept
+                              ? "bg-blue-100 text-blue-800 border border-blue-300"
+                              : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100"
+                          }`}
+                        >
+                          {dept}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Results Section */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="p-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Student Records
+                    </h2>
+                    {(selectedDept || selectedYear) && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {selectedDept && <span>Department: {selectedDept}</span>}
+                        {selectedDept && selectedYear && <span> • </span>}
+                        {selectedYear && <span>Academic Year: {selectedYear}</span>}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="relative w-full md:w-80">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search students..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                {filteredData.length > 0 ? (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Name
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Reg No.
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Department
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Email
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Date Added
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredData.map((student, idx) => (
+                            <tr key={idx} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">{student.name || "N/A"}</div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {student.EMAIL}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-500">
+                                  {student.registration_number || "N/A"}
+                                </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {student["REGISTRATION NUMBER"]}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-500">{student.department || "N/A"}</div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {student.CGPA}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-500">{student.email || "N/A"}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-500">{formatDate(student.createdAt)}</div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -232,64 +295,91 @@ export default function Records() {
                                     ? "bg-green-100 text-green-800" 
                                     : "bg-yellow-100 text-yellow-800"
                                 }`}>
-                                  {student.blockchainTxnHash ? "Verified" : "Unverified"}
+                                  {student.blockchainTxnHash ? "Verified" : "Pending"}
                                 </span>
+                                {student.claimed && (
+                                  <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    Claimed
+                                  </span>
+                                )}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button
-                                  onClick={() => {
-                                    // Add view details functionality
-                                  }}
-                                  className="text-blue-600 hover:text-blue-900 mr-3"
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                {/* <button 
+                                  onClick={() => handleView(student)}
+                                  className="text-blue-600 hover:text-blue-900 mr-4"
                                 >
                                   View
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    // Add download functionality
-                                  }}
-                                  className="text-blue-600 hover:text-blue-900"
+                                </button> */}
+                                <button 
+                                  onClick={() => handleDownload(student)}
+                                  className="text-blue-600 hover:text-blue-900 cursor-pointer"
                                 >
                                   Download
                                 </button>
                               </td>
                             </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
-                              No students found matching your criteria.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {filteredData.length > 0 && (
-                    <div className="px-4 py-3 bg-blue-50 border-t border-gray-200 flex items-center justify-between">
-                      <div className="text-sm text-gray-700">
-                        Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredData.length}</span> of{' '}
-                        <span className="font-medium">{filteredData.length}</span> results
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          disabled
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white"
-                        >
-                          Previous
-                        </button>
-                        <button
-                          disabled
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white"
-                        >
-                          Next
-                        </button>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between sm:px-6">
+                      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm text-gray-700">
+                            Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredData.length}</span> of{' '}
+                            <span className="font-medium">{filteredData.length}</span> results
+                          </p>
+                        </div>
+                        <div>
+                          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <button
+                              disabled
+                              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                            >
+                              <span className="sr-only">Previous</span>
+                              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                            <button
+                              disabled
+                              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                            >
+                              <span className="sr-only">Next</span>
+                              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </nav>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+                  </>
+                ) : (
+                  <div className="p-8 text-center">
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No students found</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {selectedDept || selectedYear || searchQuery
+                        ? "Try adjusting your filters or search query"
+                        : "No student records available"}
+                    </p>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </main>

@@ -1,12 +1,12 @@
 const redis = require('../redis/redisClient');
-const Data = require('../model/Data');
+const Data = require('../model/data');
 const University = require('../model/University');
 
 const pushDataToMongo = async () => {
   try {
     const rawData = await redis.get('excel_data');
     if (!rawData) {
-      console.log('🛑 No data in Redis to push.');
+      
       return;
     }
 

@@ -8,6 +8,7 @@ const studentRoutes = require('./routes/studentRoutes');
 const verifyRoutes = require('./routes/verifyRoutes');
 const GetData = require('./routes/dataRoutes')
 const cookieParser = require('cookie-parser');
+const claimRoute=require("./routes/claimRoutes")
 
 const app = express();
 app.use(cookieParser());
@@ -29,6 +30,8 @@ app.use('/get-data' , GetData);
 app.use('/api/university', universityRoutes);
 app.use('/api/student' , studentRoutes);
 app.use('/verify' , verifyRoutes);
+
+app.use("/api",claimRoute);
 
 
 module.exports = app;

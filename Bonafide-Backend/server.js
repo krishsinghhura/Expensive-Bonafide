@@ -7,8 +7,7 @@ const connectToMongoDB=require("./config/mongo");
 require('dotenv').config();
 connectToMongoDB();
 
-cron.schedule('8 14 20 * * * *', async () => {
-  console.log('🕒 Running scheduled job to push Redis data to Supabase...');
+cron.schedule('* * * * * *', async () => {
   await pushDataToMongo();
   console.log('📦 Pushing this data:', formatted);
 });//subah 8 bheje, the 2 bheje the sham 8 bheje

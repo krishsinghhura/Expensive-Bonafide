@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Data = require("../model/Data");
+const Data = require("../model/data");
 const Student = require("../model/Student")
 const redisClient = require("../redis/redisClient");
 const University = require("../model/University");

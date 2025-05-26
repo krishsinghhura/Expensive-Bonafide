@@ -3,22 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { uploadMerkleRoot } from "../utils/uploadMerkleRoot";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
+import Cancel from "../components/CancelDialogBox";
 
 const ConfirmBlockchainPost = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [counter, setCounter] = useState(0);
   const [isCounting, setIsCounting] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(()=>{
-    const token=Cookies.get("token");
+  useEffect(() => {
+    const token = Cookies.get("token");
 
-    if(!token){
+    if (!token) {
       navigate("/auth");
     }
-  },[])
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -101,7 +103,9 @@ const ConfirmBlockchainPost = () => {
         </h2>
 
         {loading ? (
-          <p className="text-blue-700 animate-pulse">Loading data from Redis...</p>
+          <p className="text-blue-700 animate-pulse">
+            Loading data from Redis...
+          </p>
         ) : data.length === 0 ? (
           <p className="text-red-500">No data found in Redis.</p>
         ) : (
@@ -131,23 +135,31 @@ const ConfirmBlockchainPost = () => {
               </table>
             </div>
 
-            <div className="mt-6 flex gap-4 items-center">
-              <button
-                onClick={handleConfirm}
-                disabled={isCounting}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition duration-300 disabled:opacity-60"
-              >
-                ✅ Confirm and Post to Blockchain
-              </button>
+            <div>
+              {/* Your button block */}
+              <div className="mt-6 flex gap-4 items-center">
+                <button
+                  onClick={handleConfirm}
+                  disabled={isCounting}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition duration-300 disabled:opacity-60"
+                >
+                  ✅ Confirm and Post to Blockchain
+                </button>
 
-              <button
-                onClick={() => navigate("/")}
-                className="bg-gray-500 text-white px-6 py-3 rounded-lg shadow hover:bg-gray-600 transition duration-300"
-              >
-                ❌ Cancel
-              </button>
+                <button
+                  onClick={() => setShowCancelDialog(true)}
+                  className="bg-gray-500 text-white px-6 py-3 rounded-lg shadow hover:bg-gray-600 transition duration-300"
+                >
+                  ❌ Cancel
+                </button>
+              </div>
+
+              {/* Cancel dialog component */}
+              <Cancel
+                showCancelDialog={showCancelDialog}
+                setShowCancelDialog={setShowCancelDialog}
+              />
             </div>
-
             {isCounting && (
               <div className="w-full mt-6">
                 <div className="w-full bg-gray-300 h-4 rounded-full overflow-hidden shadow-inner">

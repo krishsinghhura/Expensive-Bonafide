@@ -2,12 +2,13 @@
 const { ethers } = require("ethers");
 const redis = require("../redis/redisClient");
 const abi = require("../abi.json");
-const Data = require("../model/Data");
+const Data = require("../model/data");
 const Student = require("../model/Student");
 const generateCertificate = require("../services/generateTemplate");
 const nodemailer = require("nodemailer");
 const path = require("path");
 const supabase = require("../config/supabse");
+const syncState=require("../services/SyncData");
 require("dotenv").config();
 
 // Initialize Ethereum provider and signer
@@ -16,7 +17,7 @@ const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 // Smart Contract Instance
 const contract = new ethers.Contract(
-  "0x89896597450A9241F716996e16838279d362ac54",
+  "0x67fE247880cE9c40308dBCE23ac0Fb115753479a",
   abi,
   signer
 );
@@ -32,6 +33,18 @@ const fetchDataFromRedis = async () => {
   } catch (err) {
     throw new Error("Error fetching/parsing data from Redis: " + err.message);
   }
+};
+
+const cancelSync = (req, res) => {
+  console.log("starting cancellation");
+  console.log(syncState.currentEmail);
+  
+  if (!syncState.currentEmail) {
+    return res.status(400).send("❗ No sync in progress to cancel.");
+  }
+
+  syncState.isCancelled = true;
+  res.status(200).send(`🛑 Sync cancellation requested. Will stop after processing: ${syncState.currentEmail}`);
 };
 
 // Push individual student's data to blockchain
@@ -204,9 +217,19 @@ const syncDataToBlockchain = async (req, res) => {
     }
 
     for (const student of studentData) {
+      if (syncState.isCancelled) {
+        console.log("🛑 Sync cancelled by user.");
+        break;
+      }
+
       if (student.EMAIL) {
+        syncState.currentEmail = student.EMAIL;
         await pushDataToBlockchain(student.EMAIL);
       }
+
+      syncState.currentEmail = null; // Reset when done
+      syncState.isCancelled = false; // Optional: auto-reset flag
+
     }
 
     res.status(200).send("✅ All student data successfully synchronized with the blockchain.");
@@ -218,4 +241,5 @@ const syncDataToBlockchain = async (req, res) => {
 
 module.exports = {
   syncDataToBlockchain,
+  cancelSync
 };

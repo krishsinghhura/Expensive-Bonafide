@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import ABI from "./abi.json";
 
-const CONTRACT_ADDRESS = "0x89896597450A9241F716996e16838279d362ac54";
+const CONTRACT_ADDRESS = "0x67fE247880cE9c40308dBCE23ac0Fb115753479a";
 
 const ClaimEmailNFT = ({ email = "", jsonUrl = "", disabled = false }) => {
   const [status, setStatus] = useState("");
@@ -46,31 +46,44 @@ const ClaimEmailNFT = ({ email = "", jsonUrl = "", disabled = false }) => {
   };
 
   const claimNFT = async () => {
-    if (!isVerified) {
-      alert("Email must be verified first");
-      return;
-    }
+  if (!isVerified) {
+    alert("Email must be verified first");
+    return;
+  }
+  console.log(jsonUrl);
+  
+  try {
+    setStatus("Connecting wallet...");
+    const account = await connectWallet();
 
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+    setStatus("Claiming NFT... (Confirm in MetaMask)");
+    const tx = await contract.mintNFT(email, account, jsonUrl);
+    await tx.wait();
+
+    // After successful mint, update backend
     try {
-      setStatus("Connecting wallet...");
-      const account = await connectWallet();
+      setStatus("Updating claim status...");
+      const response = await axios.post('http://localhost:4000/api/claim', {
+        email,
+        walletAddress: account
+      });
 
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-
-      setStatus("Claiming NFT... (Confirm in MetaMask)");
-      const tx = await contract.mintNFT(email, account, jsonUrl);
-      await tx.wait();
-
-      setStatus("🎉 NFT successfully claimed!");
-    } catch (err) {
-      console.error("Claim error:", err);
-      setStatus("❌ Error: " + (err.message.includes("user rejected") 
-        ? "Transaction rejected" 
-        : err.message));
+      setStatus("🎉 NFT successfully claimed and recorded!");
+    } catch (backendError) {
+      console.error("Backend update error:", backendError);
+      setStatus("⚠️ NFT minted but backend update failed: " + backendError.message);
     }
-  };
+  } catch (err) {
+    console.error("Claim error:", err);
+    setStatus("❌ Error: " + (err.message.includes("user rejected") 
+      ? "Transaction rejected" 
+      : err.message));
+  }
+};
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
