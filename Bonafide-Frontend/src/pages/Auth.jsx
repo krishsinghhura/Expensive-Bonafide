@@ -128,9 +128,11 @@ export default function AuthPage() {
         
         if (userType === "student") {
           Cookies.set("token", response.data.token, cookieOptions);
+          localStorage.setItem("token", response.data.token);
           navigate("/student-dashboard", { state: response.data });
         } else {
           Cookies.set("token", response.data.token, cookieOptions);
+          localStorage.setItem("token", response.data.token);
           navigate("/data");
         }
       } else {
@@ -155,9 +157,11 @@ export default function AuthPage() {
         
         if (userType === "student") {
           Cookies.set("token", response.data.token, cookieOptions);
+          localStorage.setItem("token", response.data.token);
           // navigate("/student-dashboard", { state: response.data });
         } else {
           Cookies.set("token", response.data.token, cookieOptions);
+          localStorage.setItem("token", response.data.token);
           navigate("/data");
         }
       }
