@@ -1,95 +1,86 @@
 const { createCanvas, loadImage } = require('canvas');
 const path = require('path');
 
-const generateCertificate = async ({ name, regNumber, department, degree = "Bachelor of Technology", date = new Date() }) => {
-  // Horizontal orientation (landscape)
+const generateCertificate = async ({ name, regNumber, department, date = new Date() }) => {
   const width = 1200;
-  const height = 800;
+  const height = 850;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  // White background
-  ctx.fillStyle = '#ffffff';
+  // Background - light cream color similar to the sample
+  ctx.fillStyle = '#fff9e6';
   ctx.fillRect(0, 0, width, height);
 
-  // Add CUTM watermark (semi-transparent)
-  ctx.fillStyle = 'rgba(200, 200, 200, 0.1)';
-  ctx.font = 'bold 120px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('CUTM', width / 2, height / 2);
-
-  // Load logos
+  // Load logos - you'll need to have these logo files in your directory
   const universitySeal = await loadImage(path.join(__dirname, '../logos/university_seal.png'));
   const bonafideLogo = await loadImage(path.join(__dirname, '../logos/bonafide_logo.png'));
 
-  // Registration info at top left
-  ctx.fillStyle = '#000';
-  ctx.font = '16px Arial';
-  ctx.textAlign = 'left';
-  ctx.fillText(`Reg. No. ${regNumber}`, 50, 50);
-  ctx.fillText('S1. No. 0392/01-14/2018', 50, 80);
+  // Draw university seal at top center
+  ctx.drawImage(universitySeal, width/2 - 75, 30, 150, 150);
 
-  // University branding at top center
+  // University name and details
+  ctx.fillStyle = '#000';
   ctx.font = 'bold 28px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('Centurion', width / 2, 50);
-  ctx.font = 'bold 36px Arial';
-  ctx.fillText('UNIVERSITY', width / 2, 90);
+  ctx.fillText('CENTURION UNIVERSITY OF TECHNOLOGY AND MANAGEMENT, ODISHA', width / 2, 220);
 
-  // University full name and details
-  ctx.font = 'bold 22px Arial';
-  ctx.fillText('CENTURION UNIVERSITY OF TECHNOLOGY AND MANAGEMENT, ODISHA', width / 2, 140);
-  ctx.font = 'italic 18px Arial';
-  ctx.fillText('Shaping Lives, Empowering Communities...', width / 2, 170);
+  // University tagline
+  ctx.font = 'italic 20px Arial';
+  ctx.fillText('Shaping Lives, Empowering Communities...', width / 2, 250);
+  
+  // Establishment info
   ctx.font = '14px Arial';
-  ctx.fillText('(Estd. Vide Odisha Act 4 of 2010 & u/s 2 (f) of UGC Act, 1956)', width / 2, 200);
+  ctx.fillText('(Estd. Vide Odisha Act 4 of 2010 & u/s 2 (f) of UGC Act, 1956)', width / 2, 280);
 
   // Main certificate text
-  ctx.font = '24px Times New Roman';
+  ctx.font = '22px Times New Roman';
   const certificateText = [
     `This is to certify that ${name.toUpperCase()}`,
     `having fulfilled the academic requirements successfully during the academic year`,
     `has this day been admitted by the Governing Body to the Degree of`,
-    `${degree} in ${department}`,
+    `Bachelor of Technology in ${department}`,
     `Given under the seal of the University`
   ];
   
   // Draw each line of text
   certificateText.forEach((line, index) => {
-    ctx.fillText(line, width / 2, 300 + (index * 50));
+    ctx.fillText(line, width / 2, 350 + (index * 40));
   });
+
+  // Registration number and serial number (positioned similar to sample)
+  ctx.font = '16px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Reg. No. ${regNumber}`, 100, 150);
+  ctx.fillText('S1. No. 0392/01-14/2018', 100, 180); // You might want to make this dynamic
 
   // Date section
   ctx.textAlign = 'right';
-  ctx.fillText(`Date: ${formatDate(date)}`, width - 100, 550);
+  ctx.fillText(`Date: ${formatDate(date)}`, width - 100, 600);
 
   // Signature section
   ctx.textAlign = 'center';
-  ctx.font = '20px Arial';
-  ctx.fillText('Vice Chancellor', width / 2, 650);
+  ctx.fillText('Vice Chancellor', width / 2, 700);
   
   // Draw signature line
   ctx.beginPath();
-  ctx.moveTo(width/2 - 150, 630);
-  ctx.lineTo(width/2 + 150, 630);
-  ctx.strokeStyle = '#000';
+  ctx.moveTo(width/2 - 100, 680);
+  ctx.lineTo(width/2 + 100, 680);
   ctx.stroke();
 
   // Bonafide verification section
   ctx.textAlign = 'left';
-  ctx.font = '18px Arial';
-  ctx.fillText('Verified by Bonafide', 100, 700);
-  ctx.drawImage(bonafideLogo, 250, 670, 100, 50);
+  ctx.font = '16px Arial';
+  ctx.fillText('Verified by Bonafide', 100, 750);
+  ctx.drawImage(bonafideLogo, 250, 720, 100, 50);
 
-  // University seal at bottom right
-  ctx.drawImage(universitySeal, width - 200, height - 150, 120, 120);
+  // University seal at bottom
+  ctx.drawImage(universitySeal, width - 200, height - 150, 100, 100);
 
   // Return PNG buffer
   return canvas.toBuffer('image/png');
 };
 
-// Helper function to format date as "26th May, 2025"
+// Helper function to format date as "1st December, 2018"
 function formatDate(date) {
   const day = date.getDate();
   const month = date.toLocaleString('default', { month: 'long' });
