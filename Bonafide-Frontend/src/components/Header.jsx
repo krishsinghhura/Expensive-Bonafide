@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { motion, AnimatePresence } from 'framer-motion';
+import bonafideLogo from './bonafide-logo.png';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const Header = () => {
             <Link to="/" className="flex items-center space-x-2 group">
               <img
                 className="h-10 w-auto transition-transform group-hover:scale-110"
-                src="../../public/bonafide-logo.png"
+                src={bonafideLogo}
                 alt="Bonafide Logo"
               />
             </Link>
