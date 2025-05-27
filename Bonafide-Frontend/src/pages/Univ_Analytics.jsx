@@ -42,7 +42,6 @@ export default function Analytics() {
         setLoading(true);
         const response = await axios.get("https://expensive-bonafide-production.up.railway.app/get-data/data", {
           headers: {
-            "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
         });

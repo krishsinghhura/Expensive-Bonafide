@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Header = () => {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const activeStyle = {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -13,8 +14,11 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/auth');
+    setIsLoggingOut(true);
+    setTimeout(() => {
+      localStorage.removeItem('token');
+      navigate('/auth');
+    }, 1000); // 1 second delay to show the loader
   };
 
   return (
@@ -25,7 +29,7 @@ const Header = () => {
             <Link to="/" className="flex items-center space-x-2 group">
               <img
                 className="h-10 w-auto transition-transform group-hover:scale-110"
-                src="./public/bonafide-logo.png"
+                src="../../public/bonafide-logo.png"
                 alt="Bonafide Logo"
               />
             </Link>
@@ -109,12 +113,42 @@ const Header = () => {
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white font-medium transition-all"
+                  className="px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white font-medium transition-all flex items-center justify-center min-w-[80px]"
+                  disabled={isLoggingOut}
                 >
-                  Logout
+                  {isLoggingOut ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                    />
+                  ) : (
+                    "Logout"
+                  )}
                 </button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Full-screen loader after logout confirmation */}
+      <AnimatePresence>
+        {isLoggingOut && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
+          >
+            <div className="text-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-12 h-12 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"
+              />
+              <p className="text-white text-lg font-medium">Logging out...</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

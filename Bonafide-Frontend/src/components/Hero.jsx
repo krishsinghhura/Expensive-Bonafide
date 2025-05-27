@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
   const [name, setName] = useState(null);
+  const navigate=useNavigate();
 
   useEffect(() => {
     const fetchStudent = async (req, res) => {
+      const token=localStorage.getItem("token");
       try {
         const response = await axios.get(
           "https://bonafide-backend.onrender.com/get-data/details",
           {
-            withCredentials: true,
+            headers: {
+            "Authorization": `Bearer ${token}`,
+          },
           }
         );
         
@@ -41,7 +46,9 @@ const Hero = () => {
           </h4>
         ) : (
           <a
-            href="/auth"
+            onClick={()=>{
+              navigate("/auth");
+            }}
             className="bg-white text-indigo-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 hover:scale-105 transition-transform duration-300"
           >
             Get Started
