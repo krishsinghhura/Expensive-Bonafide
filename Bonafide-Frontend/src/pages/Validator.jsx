@@ -134,6 +134,8 @@ const Validator = () => {
 
     setSaving(true);
     try {
+      console.log("token is",token);
+      
       const response = await fetch(
         "https://expensive-bonafide-production.up.railway.app/api/upload",
         {
