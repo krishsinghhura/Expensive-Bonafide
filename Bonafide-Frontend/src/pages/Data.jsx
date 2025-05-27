@@ -15,7 +15,7 @@ export default function Records() {
   const [studentData, setStudentData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [token, setToken] = useState("");
+  const [Token, setToken] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,13 +33,13 @@ export default function Records() {
     const fetchStudentData = async () => {
       try {
         setLoading(true);
-        console.log("Token is", token);
+        console.log("Token is", Token);
 
         const response = await axios.get(
           "https://expensive-bonafide-production.up.railway.app/get-data/data",
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${Token}`,
             },
           }
         );
@@ -82,7 +82,7 @@ export default function Records() {
     };
 
     fetchStudentData();
-  }, []);
+  }, [Token]);
 
   const handleDeptClick = (dept) => {
     setSelectedDept(selectedDept === dept ? "" : dept);
