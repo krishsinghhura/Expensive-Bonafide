@@ -140,7 +140,7 @@ const Validator = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            "Authorization": `Bearer ${token}`,
           },
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ data: validRows }),
@@ -181,7 +181,7 @@ const Validator = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            "Authorization": `Bearer ${token}`,
           },
         }
       );
