@@ -11,7 +11,7 @@ const ConfirmBlockchainPost = () => {
   const [counter, setCounter] = useState(0);
   const [isCounting, setIsCounting] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [token,setToken]=useState("");
+  const [Token,setToken]=useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,6 +25,9 @@ const ConfirmBlockchainPost = () => {
 
   const fetchData = async () => {
     try {
+      const token = localStorage.getItem("token");
+      console.log("before hitting",token);
+      
       const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/fetch", {
         method: "GET",
         headers: {
