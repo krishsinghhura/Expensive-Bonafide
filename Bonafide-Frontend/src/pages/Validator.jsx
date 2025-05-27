@@ -175,6 +175,7 @@ const Validator = () => {
 
   const handleFetchFromRedis = async () => {
     setFetching(true);
+    const Token=localStorage.getItem("token");
     try {
       const response = await fetch(
         "https://expensive-bonafide-production.up.railway.app/api/fetch",
@@ -182,7 +183,7 @@ const Validator = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            "Authorization": `Bearer ${Token}`,
           },
         }
       );
