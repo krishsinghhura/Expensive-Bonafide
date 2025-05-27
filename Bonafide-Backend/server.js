@@ -7,10 +7,14 @@ const connectToMongoDB=require("./config/mongo");
 require('dotenv').config();
 connectToMongoDB();
 
-cron.schedule('8 13 20 * * * *', async () => {
-  await pushDataToMongo();
-  console.log('📦 Pushing this data:', formatted);
-});//subah 8 bheje, the 2 bheje the sham 8 bheje
+const times = ['0 8 * * *', '0 14 * * *', '0 20 * * *'];
+
+times.forEach(time => {
+  cron.schedule(time, async () => {
+    await pushDataToMongo();
+    console.log('📦 Data pushed at', new Date().toLocaleTimeString());
+  });
+});
 
 const PORT = process.env.PORT || 4000;
 
