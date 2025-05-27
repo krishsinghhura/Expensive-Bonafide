@@ -19,72 +19,79 @@ export default function Records() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setToken(token);
+  const token = localStorage.getItem("token");
+  setToken(token);
 
-    console.log("Token first",token);
+  console.log("Token first", token);
 
-    if (!token) {
-      navigate("/auth");
-    }
-  }, []);
+  if (!token) {
+    navigate("/auth");
+  }
+}, []);
 
-  useEffect(() => {
-    const fetchStudentData = async () => {
-      try {
-        setLoading(true);
+useEffect(() => {
+  const fetchStudentData = async () => {
+    try {
+      setLoading(true);
 
-        const token = localStorage.getItem("token");
-        console.log("Token is", token);
+      const token = localStorage.getItem("token");
+      console.log("Token is", token);
 
-        const response = await axios.get(
-          "https://expensive-bonafide-production.up.railway.app/get-data/data",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+      const response = await fetch(
+        "https://expensive-bonafide-production.up.railway.app/get-data/data",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-        const records = response.data.data;
-        console.log("Fetched records:", records);
-
-        // Process data to extract departments and academic years
-        const deptSet = new Set();
-        const yearSet = new Set();
-
-        records.forEach((student) => {
-          if (student.department) {
-            deptSet.add(student.department);
-          }
-
-          if (student.createdAt) {
-            const date = new Date(student.createdAt);
-            const year = date.getFullYear();
-            const academicYear = `${year}-${String(year + 1).slice(-2)}`;
-            yearSet.add(academicYear);
-          }
-        });
-
-        const sortedYears = Array.from(yearSet).sort((a, b) =>
-          b.localeCompare(a)
-        );
-        const sortedDepts = Array.from(deptSet).sort();
-
-        setAcademicYears(sortedYears);
-        setDepartments(sortedDepts);
-        setStudentData(records);
-        setSelectedYear(sortedYears[0] || "");
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching student data:", err);
-        setError("Failed to load student data. Please try again later.");
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
       }
-    };
 
-    fetchStudentData();
-  }, []);
+      const data = await response.json();
+      const records = data.data;
+      console.log("Fetched records:", records);
+
+      // Process data to extract departments and academic years
+      const deptSet = new Set();
+      const yearSet = new Set();
+
+      records.forEach((student) => {
+        if (student.department) {
+          deptSet.add(student.department);
+        }
+
+        if (student.createdAt) {
+          const date = new Date(student.createdAt);
+          const year = date.getFullYear();
+          const academicYear = `${year}-${String(year + 1).slice(-2)}`;
+          yearSet.add(academicYear);
+        }
+      });
+
+      const sortedYears = Array.from(yearSet).sort((a, b) =>
+        b.localeCompare(a)
+      );
+      const sortedDepts = Array.from(deptSet).sort();
+
+      setAcademicYears(sortedYears);
+      setDepartments(sortedDepts);
+      setStudentData(records);
+      setSelectedYear(sortedYears[0] || "");
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching student data:", err);
+      setError("Failed to load student data. Please try again later.");
+      setLoading(false);
+    }
+  };
+
+  fetchStudentData();
+}, []);
+
 
   const handleDeptClick = (dept) => {
     setSelectedDept(selectedDept === dept ? "" : dept);
