@@ -13,7 +13,7 @@ const Cancel = ({ showCancelDialog, setShowCancelDialog }) => {
       setIsCancelling(true);
       setConfirmationCancelMessage("❌ Cancelling...");
 
-      await axios.post("https://bonafide-backend.onrender.com/block/cancel");
+      await axios.post("https://expensive-bonafide-production.up.railway.app/block/cancel");
 
       setConfirmationCancelMessage("✅ Cancellation successful.");
     } catch (error) {
