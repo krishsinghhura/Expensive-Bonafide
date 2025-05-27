@@ -34,7 +34,7 @@ export default function Analytics() {
     if (!token) {
       navigate("/auth");
     }
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     const fetchAnalytics = async () => {

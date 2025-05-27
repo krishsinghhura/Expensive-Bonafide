@@ -24,7 +24,7 @@ export default function Records() {
     if (!token) {
       navigate("/auth");
     }
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     const fetchStudentData = async () => {
