@@ -14,7 +14,9 @@ const Header = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('/auth');
+    setInterval(()=>{
+      navigate('/auth')
+    },2000);
   };
 
   return (
