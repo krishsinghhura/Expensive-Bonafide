@@ -10,10 +10,12 @@ const StudentDashboard = () => {
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [token,setToken]=useState("");
 const navigate = useNavigate();
 
   useEffect(()=>{
-    const token=Cookies.get("token");
+    const token = localStorage.getItem("token");
+    setToken(token);
 
     if(!token){
       navigate("/auth");
@@ -24,7 +26,10 @@ const navigate = useNavigate();
     const fetchStudentData = async () => {
       try {
         const response = await axios.get('https://expensive-bonafide-production.up.railway.app/get-data/student', {
-          withCredentials: true
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
         });
         setStudentData(response.data);
         setLoading(false);

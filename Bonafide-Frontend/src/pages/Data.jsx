@@ -15,10 +15,12 @@ export default function Records() {
   const [studentData, setStudentData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [token,setToken]=useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = Cookies.get("token");
+    const token = localStorage.getItem("token");
+    setToken(token);
     if (!token) {
       navigate("/auth");
     }
@@ -29,7 +31,10 @@ export default function Records() {
       try {
         setLoading(true);
         const response = await axios.get("https://expensive-bonafide-production.up.railway.app/get-data/data", {
-          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
         });
         
         const records = response.data.data;

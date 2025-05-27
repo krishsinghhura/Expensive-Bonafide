@@ -13,7 +13,7 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    Cookies.remove('token');
+    localStorage.remove('token');
     navigate('/auth');
   };
 

@@ -16,7 +16,10 @@ const Profile = () => {
         const response = await axios.get(
           "https://expensive-bonafide-production.up.railway.app/get-data/details",
           {
-            withCredentials: true,
+            headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
           }
         );
 
@@ -40,7 +43,7 @@ const Profile = () => {
   }, []);
 
   const handleLogout = () => {
-    Cookies.remove("token");
+    localStorage.remove("token");
     navigate("/auth");
   };
 
