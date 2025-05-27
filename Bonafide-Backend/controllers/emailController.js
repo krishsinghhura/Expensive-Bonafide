@@ -209,6 +209,8 @@ const pushDataToBlockchain = async (EMAIL) => {
 const syncDataToBlockchain = async (req, res) => {
   try {
     const studentData = await fetchDataFromRedis();
+    console.log(studentData);
+    
 
     if (!Array.isArray(studentData) || studentData.length === 0) {
       return res

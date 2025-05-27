@@ -64,7 +64,7 @@ const ConfirmBlockchainPost = () => {
     }, 11000);
 
     try {
-      const response = await fetch("https://expensive-bonafide-production.up.railway.app/upload-email", {
+      const response = await fetch("https://expensive-bonafide-production.up.railway.app/block/upload-email", {
         method: "GET",
       });
 
