@@ -32,7 +32,7 @@ const Validator = () => {
 
   const navigate = useNavigate();
   useEffect(() => {
-    const token = Cookies.get("token");
+    const token = localStorage.getItem("token");
     setToken(token);
 
     if (!token) {
