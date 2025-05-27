@@ -33,13 +33,15 @@ export default function Records() {
     const fetchStudentData = async () => {
       try {
         setLoading(true);
-        console.log("Token is", Token);
+
+        const token = localStorage.getItem("token");
+        console.log("Token is", token);
 
         const response = await axios.get(
           "https://expensive-bonafide-production.up.railway.app/get-data/data",
           {
             headers: {
-              Authorization: `Bearer ${Token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
