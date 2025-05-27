@@ -28,10 +28,12 @@ const Validator = () => {
   const [savedData, setSavedData] = useState(null);
   const [alert, setAlert] = useState(null);
   const [dataSaved, setDataSaved] = useState(false);
+  const [token,setToken]=useState("");
 
   const navigate = useNavigate();
   useEffect(() => {
     const token = Cookies.get("token");
+    setToken(token);
 
     if (!token) {
       navigate("/auth");
@@ -132,12 +134,18 @@ const Validator = () => {
 
     setSaving(true);
     try {
-      const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/upload", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: validRows }),
-      });
+      const response = await fetch(
+        "https://expensive-bonafide-production.up.railway.app/api/upload",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: validRows }),
+        }
+      );
 
       const result = await response.json();
       if (response.ok) {
@@ -167,10 +175,16 @@ const Validator = () => {
   const handleFetchFromRedis = async () => {
     setFetching(true);
     try {
-      const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/fetch", {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        "https://expensive-bonafide-production.up.railway.app/api/fetch",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const result = await response.json();
       if (response.ok && result.data?.length > 0) {
         setSavedData(result.data);
