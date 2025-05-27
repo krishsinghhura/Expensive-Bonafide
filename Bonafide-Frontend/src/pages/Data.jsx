@@ -84,7 +84,7 @@ export default function Records() {
     };
 
     fetchStudentData();
-  }, [Token]);
+  }, []);
 
   const handleDeptClick = (dept) => {
     setSelectedDept(selectedDept === dept ? "" : dept);
