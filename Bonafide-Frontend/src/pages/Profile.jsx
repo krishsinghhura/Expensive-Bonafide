@@ -43,7 +43,7 @@ const Profile = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.remove("token");
+    localStorage.removeItem("token");
     navigate("/auth");
   };
 
