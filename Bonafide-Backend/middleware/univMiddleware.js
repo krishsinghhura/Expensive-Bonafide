@@ -7,7 +7,7 @@ const univMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MzNmOTZkNDFhOTNlNjNlMDY1MGIwMSIsImlhdCI6MTc0ODI3OTkzNiwiZXhwIjoxNzQ4MzY2MzM2fQ.UP-2hPNrvLf8RiVug7kR8WIxGTkJJr432vtMYHTTNLg", process.env.JWT_SECRET);
     req.user = decoded; // Add user info to req object
-    console.log(req.user);
+    console.log("Requested user", req.user.id);
     
     next(); // Proceed to next middleware or route handler
   } catch (error) {

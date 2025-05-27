@@ -7,7 +7,7 @@ const University = require("../model/University");
 const getDataForUser = async (req, res) => {
   try {
     const univId = req.user.id;
-    console.log("Inisde controller",req.user);
+    console.log("Inisde controller",univId);
     
     let data = [];
     let fromRedis = false;
