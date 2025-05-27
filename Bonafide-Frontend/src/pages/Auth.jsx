@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
 import { FaUniversity, FaUserGraduate, FaLock, FaEnvelope, FaUser, FaKey } from "react-icons/fa";
 
 export default function AuthPage() {
@@ -22,12 +21,8 @@ export default function AuthPage() {
 
   // Check for existing tokens and redirect if found
   useEffect(() => {
-    const studentToken = Cookies.get("StudentToken");
-    const universityToken = Cookies.get("token");
-    
-    if (studentToken) {
-      navigate("/student-dashboard");
-    } else if (universityToken) {
+    const universityToken = localStorage.getItem("token");
+    if (universityToken) {
       navigate("/data");
     }
   }, [navigate]);
@@ -126,15 +121,8 @@ export default function AuthPage() {
           sameSite: 'strict'
         };
         
-        if (userType === "student") {
-          Cookies.set("token", response.data.token, cookieOptions);
-          localStorage.setItem("token", response.data.token);
-          navigate("/student-dashboard", { state: response.data });
-        } else {
-          Cookies.set("token", response.data.token, cookieOptions);
-          localStorage.setItem("token", response.data.token);
+        localStorage.setItem("token", response.data.token);
           navigate("/data");
-        }
       } else {
         // Register logic
         const payload = userType === "student" ? {
@@ -155,15 +143,8 @@ export default function AuthPage() {
           sameSite: 'strict'
         };
         
-        if (userType === "student") {
-          Cookies.set("token", response.data.token, cookieOptions);
-          localStorage.setItem("token", response.data.token);
-          // navigate("/student-dashboard", { state: response.data });
-        } else {
-          Cookies.set("token", response.data.token, cookieOptions);
-          localStorage.setItem("token", response.data.token);
+        localStorage.setItem("token", response.data.token);
           navigate("/data");
-        }
       }
     } catch (error) {
       console.error("Authentication error:", error);
