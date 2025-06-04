@@ -1,25 +1,43 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
-import { motion, AnimatePresence } from 'framer-motion';
-import bonafideLogo from './bonafide-logo.png';
+import React, { useEffect, useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import Cookies from "js-cookie";
+import bonafideLogo from "./bonafide-logo.png"
 
 const Header = () => {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [studentAuthenticated, setStudentAuthenticated] = useState(false);
+  const [univAuthenticated, setUnivAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const studentToken = Cookies.get("StudentToken");
+      if (studentToken) {
+        setStudentAuthenticated(true);
+      }
+      const univToken = Cookies.get("token");
+      if (univToken) {
+        setUnivAuthenticated(true);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const activeStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    transform: 'scale(1.05)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    transform: "scale(1.05)",
   };
 
   const handleLogout = () => {
-    setIsLoggingOut(true);
-    setTimeout(() => {
-      localStorage.removeItem('token');
-      navigate('/auth');
-    }, 1000); // 1 second delay to show the loader
+    Cookies.remove("StudentToken");
+    Cookies.remove("token");
+    localStorage.removeItem("token");
+    setStudentAuthenticated(false);
+    setUnivAuthenticated(false); // <-- Fix: Update auth state
+    setShowLogoutConfirm(false); // Close modal
+    navigate("/auth");
   };
 
   return (
@@ -36,54 +54,120 @@ const Header = () => {
             </Link>
           </div>
 
-          <nav className="flex space-x-2 sm:space-x-4 items-center">
-            {/* Nav Links */}
-            {[
-              { to: '/validate', label: 'Upload', icon: '⬆️' },
-              { to: '/data', label: 'Your Data', icon: '📄' },
-              { to: '/contact', label: 'Contact', icon: '✉️' },
-              { to: '/verify-student', label: 'Verify', icon: '✅' },
-            ].map(({ to, label, icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `px-4 py-2 rounded-lg text-sm font-medium text-black hover:bg-blue-500/50 transition-all duration-300 flex items-center ${
-                    isActive ? 'bg-blue-500/30' : ''
-                  }`
-                }
-                style={({ isActive }) => (isActive ? activeStyle : {})}
-              >
-                <span className="hidden sm:inline">{label}</span>
-                <span className="sm:hidden">{icon}</span>
-              </NavLink>
-            ))}
+          <div className="flex items-center gap-2">
+            {univAuthenticated && (
+              <>
+                <NavLink
+                  to="/validate"
+                  className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg text-sm font-medium text-black hover:bg-blue-500/50 transition-all duration-300 flex items-center ${
+                      isActive ? "bg-blue-500/30" : ""
+                    }`
+                  }
+                  style={({ isActive }) => (isActive ? activeStyle : {})}
+                >
+                  <span className="hidden sm:inline">Upload</span>
+                  <span className="sm:hidden">⬆️</span>
+                </NavLink>
+              </>
+            )}
 
-            <div className="hidden md:block h-6 w-px bg-blue-400/50 mx-1"></div>
+            {(studentAuthenticated || univAuthenticated) &&
+              (studentAuthenticated ? (
+                <>
+                  <NavLink
+                    to="/student-dashboard"
+                    className={({ isActive }) =>
+                      `px-4 py-2 rounded-lg text-sm font-medium text-black hover:bg-blue-500/50 transition-all duration-300 flex items-center ${
+                        isActive ? "bg-blue-500/30" : ""
+                      }`
+                    }
+                    style={({ isActive }) => (isActive ? activeStyle : {})}
+                  >
+                    <span className="hidden sm:inline">Your Data</span>
+                    <span className="sm:hidden">📄</span>
+                  </NavLink>
+                </>
+              ) : (
+                <NavLink
+                  to="/data"
+                  className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg text-sm font-medium text-black hover:bg-blue-500/50 transition-all duration-300 flex items-center ${
+                      isActive ? "bg-blue-500/30" : ""
+                    }`
+                  }
+                  style={({ isActive }) => (isActive ? activeStyle : {})}
+                >
+                  <span className="hidden sm:inline">Your Data</span>
+                  <span className="sm:hidden">📄</span>
+                </NavLink>
+              ))}
 
             <NavLink
-              to="/profile"
-              className="p-2 rounded-full hover:bg-blue-500/50 transition-colors"
+              to="/contact"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-lg text-sm font-medium text-black hover:bg-blue-500/50 transition-all duration-300 flex items-center ${
+                  isActive ? "bg-blue-500/30" : ""
+                }`
+              }
+              style={({ isActive }) => (isActive ? activeStyle : {})}
             >
-              <div className="h-8 w-8 rounded-full bg-blue-500/30 flex items-center justify-center text-black font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
+              <span className="hidden sm:inline">Contact</span>
+              <span className="sm:hidden">✉️</span>
             </NavLink>
 
-            {/* 🔴 Logout Button */}
-            <button
-              onClick={() => setShowLogoutConfirm(true)}
-              className="ml-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-500/20 transition-all duration-300 border border-red-500"
+            <NavLink
+              to="/verify-by-third-party"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-lg text-sm font-medium text-black hover:bg-blue-500/50 transition-all duration-300 flex items-center ${
+                  isActive ? "bg-blue-500/30" : ""
+                }`
+              }
+              style={({ isActive }) => (isActive ? activeStyle : {})}
             >
-              Logout
-            </button>
-          </nav>
+              <span className="hidden sm:inline">Verify</span>
+              <span className="sm:hidden">✅</span>
+            </NavLink>
+
+            {(studentAuthenticated || univAuthenticated) && (
+              <>
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="ml-2 px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
+                >
+                  Logout
+                </button>
+              </>
+            )}
+            
+            {
+              (studentAuthenticated || univAuthenticated) && (
+                <>
+                <NavLink
+                  to="/profile"
+                  className="p-2 rounded-full hover:bg-blue-500/50 transition-colors"
+                >
+                  <div className="h-8 w-8 rounded-full bg-blue-500/30 flex items-center justify-center text-black font-medium">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                </NavLink>
+                </>
+              )
+            }
+
+
+          </div>
         </div>
       </header>
 
@@ -103,8 +187,12 @@ const Header = () => {
               transition={{ duration: 0.2 }}
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md text-center"
             >
-              <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Confirm Logout</h2>
-              <p className="mb-4 text-gray-600 dark:text-gray-300">Are you sure you want to log out?</p>
+              <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
+                Confirm Logout
+              </h2>
+              <p className="mb-4 text-gray-600 dark:text-gray-300">
+                Are you sure you want to log out?
+              </p>
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
@@ -114,42 +202,12 @@ const Header = () => {
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white font-medium transition-all flex items-center justify-center min-w-[80px]"
-                  disabled={isLoggingOut}
+                  className="px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white font-medium transition-all"
                 >
-                  {isLoggingOut ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                    />
-                  ) : (
-                    "Logout"
-                  )}
+                  Logout
                 </button>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Full-screen loader after logout confirmation */}
-      <AnimatePresence>
-        {isLoggingOut && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
-          >
-            <div className="text-center">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-12 h-12 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"
-              />
-              <p className="text-white text-lg font-medium">Logging out...</p>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

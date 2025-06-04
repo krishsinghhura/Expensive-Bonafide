@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaUniversity, FaUserGraduate, FaLock, FaEnvelope, FaUser, FaKey } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 export default function AuthPage() {
   const [isSignIn, setIsSignIn] = useState(true);
   const [userType, setUserType] = useState("university");
   const [formErrors, setFormErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState(""); // New state for authentication errors
 
   const [formData, setFormData] = useState({
     name: "",
@@ -21,15 +23,20 @@ export default function AuthPage() {
 
   // Check for existing tokens and redirect if found
   useEffect(() => {
-    const universityToken = localStorage.getItem("token");
+    const StudentToken = Cookies.get("StudentToken");
+    const universityToken = Cookies.get("token");
+    
     if (universityToken) {
       navigate("/data");
+    } else if(StudentToken){
+      navigate("/student-dashboard");
     }
   }, [navigate]);
 
   const toggleForm = () => {
     setIsSignIn(!isSignIn);
     setFormErrors({});
+    setAuthError(""); // Clear auth error when toggling forms
     setFormData({
       name: "",
       email: "",
@@ -42,6 +49,7 @@ export default function AuthPage() {
   const handleUserTypeChange = (type) => {
     setUserType(type);
     setFormErrors({});
+    setAuthError(""); // Clear auth error when changing user type
     setFormData({
       name: "",
       email: "",
@@ -60,6 +68,10 @@ export default function AuthPage() {
     // Clear error when user types
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    // Clear auth error when typing in email or password
+    if (authError && (name === "email" || name === "password")) {
+      setAuthError("");
     }
   };
 
@@ -99,12 +111,13 @@ export default function AuthPage() {
     e.preventDefault();
     const errors = validateForm();
     setFormErrors(errors);
+    setAuthError(""); // Clear previous auth errors
     
     if (Object.keys(errors).length > 0) return;
     
     setIsLoading(true);
     
-    const apiBase = "https://expensive-bonafide-production.up.railway.app/api";
+    const apiBase = "http://localhost:4000/api";
     
     try {
       if (isSignIn) {
@@ -114,15 +127,15 @@ export default function AuthPage() {
           password: formData.password,
         });
         
-        // Set cookie with secure flags
-        const cookieOptions = {
-          expires: 7, // days
-          secure: true,
-          sameSite: 'strict'
-        };
-        
-        localStorage.setItem("token", response.data.token);
+        if (userType === "student") {
+          Cookies.set("StudentToken",response.data.token);
+          localStorage.setItem("token",response.data.token);
+          navigate("/student-dashboard", { state: response.data });
+        } else {
+          Cookies.set("token",response.data.token);
+          localStorage.setItem("token",response.data.token);
           navigate("/data");
+        }
       } else {
         // Register logic
         const payload = userType === "student" ? {
@@ -137,19 +150,37 @@ export default function AuthPage() {
         
         const response = await axios.post(`${apiBase}/${userType}/register`, payload);
         
-        const cookieOptions = {
-          expires: 7,
-          secure: true,
-          sameSite: 'strict'
-        };
-        
-        localStorage.setItem("token", response.data.token);
+        if (userType === "student") {
+          Cookies.set("StudentToken",response.data.token);
+          localStorage.setItem("token", response.data.token);
+          navigate("/student-dashboard", { state: response.data });
+        } else {
+          Cookies.set("token",response.data.token);
+          localStorage.setItem("token", response.data.token);
           navigate("/data");
+        }
       }
     } catch (error) {
       console.error("Authentication error:", error);
-      alert(error.response?.data?.message || 
-           (isSignIn ? "Login failed. Please check your credentials." : "Registration failed. Please try again."));
+      
+      // Handle specific error cases
+      if (error.response) {
+        if (error.response.status === 401) {
+          setAuthError("Invalid email or password");
+        } else if (error.response.status === 400) {
+          setAuthError(error.response.data.message || "Invalid request");
+        } else if (error.response.status === 409) {
+          setAuthError("An account with this email already exists");
+        } else {
+          setAuthError(
+            isSignIn 
+              ? "Login failed. Please check your credentials." 
+              : "Registration failed. Please try again."
+          );
+        }
+      } else {
+        setAuthError("Network error. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +232,15 @@ export default function AuthPage() {
               {isSignIn ? "Sign In" : "Sign Up"} as {userType === "university" ? "Institution" : "Student"}
             </h2>
 
+            {/* Authentication error message */}
+            {authError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {authError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* ... rest of your form code remains the same ... */}
               {!isSignIn && userType === "university" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

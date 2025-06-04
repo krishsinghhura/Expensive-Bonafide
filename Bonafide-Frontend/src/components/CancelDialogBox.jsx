@@ -13,7 +13,7 @@ const Cancel = ({ showCancelDialog, setShowCancelDialog }) => {
       setIsCancelling(true);
       setConfirmationCancelMessage("❌ Cancelling...");
 
-      await axios.post("https://expensive-bonafide-production.up.railway.app/block/cancel");
+      await axios.post("http://localhost:4000/block/cancel");
 
       setConfirmationCancelMessage("✅ Cancellation successful.");
     } catch (error) {
@@ -23,7 +23,7 @@ const Cancel = ({ showCancelDialog, setShowCancelDialog }) => {
       setTimeout(() => {
         setShowCancelDialog(false);
         setIsCancelling(false);
-        navigate("/");
+        navigate("/validate");
       }, 1500);
     }
   };

@@ -1,154 +1,158 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
+import axios from "axios";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import axios from "axios";
-import { FaEdit, FaUnlockAlt, FaCheckCircle, FaDownload } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState({ name: "", email: "", role: "Student" });
+  const [university, setUniversity] = useState({ 
+    name: "", 
+    email: "",
+    privateKey: "",
+    createdAt: ""
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUniversityData = async () => {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/auth");
+          return;
+        }
+
         const response = await axios.get(
-          "https://expensive-bonafide-production.up.railway.app/get-data/details",
+          "http://localhost:4000/get-data/details",
           {
             headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
           }
         );
 
-        const data = response.data.university || response.data.Student;
-
-
-        setUser({
+        const data = response.data.university;
+        setUniversity({
           name: data.name,
           email: data.email,
-          role:
-            data.role || (response.data.university ? "University" : "Student"),
-          lastLogin: Cookies.get("lastLogin") || new Date().toLocaleString(),
-          twoFA: data.twoFA || false,
+          privateKey: data.privateKey,
+          createdAt: new Date(data.createdAt).toLocaleDateString()
         });
+        setLoading(false);
       } catch (err) {
-        console.error("Failed to fetch user details:", err);
+        console.error("Failed to fetch university details:", err);
+        setError("Failed to load university data");
+        setLoading(false);
       }
     };
 
-    fetchUser();
-  }, []);
+    fetchUniversityData();
+  }, [navigate]);
 
   const handleLogout = () => {
+    Cookies.remove("token");
     localStorage.removeItem("token");
     navigate("/auth");
   };
 
-  return (
-    <div className="flex flex-col min-h-screen bg-white transition-all duration-300">
-      {/* Floating Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-2xl">
-        <Header />
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-red-500 text-lg">{error}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Header */}
+      <Header />
 
       {/* Content Area */}
-      <div className="flex-1 pt-[111px] pb-16 px-6 sm:px-12">
-        <div className="max-w-4xl mx-auto bg-blue-300/30 backdrop-blur-md border border-blue-200/40 shadow-2xl rounded-2xl p-8 sm:p-12 text-blue-900 transition-transform duration-500 hover:scale-[1.01]">
-          <h2 className="text-4xl font-bold mb-8 text-center">Your Profile</h2>
-
-          <div className="flex flex-col sm:flex-row items-center gap-10 mb-10">
-            <div className="flex-shrink-0">
-              <img
-                src="https://via.placeholder.com/150"
-                alt="Profile"
-                className="rounded-full w-36 h-36 border-4 border-blue-200 shadow-md transition-transform duration-300 hover:scale-105"
-              />
-            </div>
-
-            <div className="flex-1 space-y-4 w-full">
-              <div>
-                <label className="block text-sm font-medium text-blue-700">
-                  Full Name
-                </label>
-                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">
-                  {user.name}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-700">
-                  Email Address
-                </label>
-                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">
-                  {user.email}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-700">
-                  Role
-                </label>
-                <p className="bg-white/30 rounded-lg p-3 text-lg font-semibold shadow-inner">
-                  {user.role}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-4 mt-4">
-                <div className="bg-white/40 text-blue-800 px-4 py-2 rounded-xl shadow text-sm flex items-center gap-2">
-                  <FaCheckCircle className="text-green-600" /> Last Login:{" "}
-                  {user.lastLogin}
-                </div>
-                <div className="bg-white/40 text-blue-800 px-4 py-2 rounded-xl shadow text-sm flex items-center gap-2">
-                  <FaUnlockAlt className="text-yellow-600" />
-                  2FA: {user.twoFA ? "Enabled" : "Disabled"}
-                </div>
-              </div>
-            </div>
+      <div className="flex-1 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="bg-blue-600 px-6 py-4">
+            <h2 className="text-2xl font-semibold text-white">
+              University Profile
+            </h2>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4 mb-10">
-            <button className="flex items-center justify-center gap-2 bg-white/40 hover:bg-white/60 text-blue-800 px-5 py-3 rounded-xl shadow transition">
-              <FaEdit /> Edit Profile
-            </button>
-            <button className="flex items-center justify-center gap-2 bg-white/40 hover:bg-white/60 text-blue-800 px-5 py-3 rounded-xl shadow transition">
-              <FaUnlockAlt /> Change Password
-            </button>
-            <button
-              className="flex items-center justify-center gap-2 bg-white/40 hover:bg-white/60 text-blue-800 px-5 py-3 rounded-xl shadow transition"
-              onClick={() => navigate("/verify-student")}
-            >
-              <FaCheckCircle /> Verify Achievements
-            </button>
-            <button className="flex items-center justify-center gap-2 bg-white/40 hover:bg-white/60 text-blue-800 px-5 py-3 rounded-xl shadow transition">
-              <FaDownload /> Download My Data
-            </button>
-          </div>
+          <div className="p-6">
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Basic Information
+                </h3>
+                <div className="mt-4 grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      University Name
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                      {university.name}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email Address
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                      {university.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-          <div className="flex justify-between items-center">
-            <button
-              onClick={() => navigate("/")}
-              className="px-5 py-2 rounded-xl bg-white/50 hover:bg-white text-blue-800 font-medium shadow-md transition duration-300"
-            >
-              Back to Home
-            </button>
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Security Information
+                </h3>
+                <div className="mt-4 grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-6">
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Account Created On
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                      {university.createdAt}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <button
-              onClick={handleLogout}
-              className="px-5 py-2 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-medium shadow-md transition duration-300"
-            >
-              Log Out
-            </button>
+            <div className="mt-8 flex justify-end space-x-4">
+              <button
+                onClick={() => navigate("/data")}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Back to Dashboard
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Log Out
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Sticky Footer */}
-      <div className="mt-auto w-full">
-        <Footer />
-      </div>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

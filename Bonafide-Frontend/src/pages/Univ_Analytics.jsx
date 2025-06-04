@@ -16,16 +16,15 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
 
-const COLORS = ["#3182ce", "#e53e3e", "#38a169", "#d69e2e", "#805ad5"];
+const COLORS = ["#3182ce", "#e53e3e", "#805ad5", "#d69e2e"];
 
 export default function Analytics() {
   const [barData, setBarData] = useState([]);
   const [pieData, setPieData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [token,setToken]=useState("");
+  const [token, setToken] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,9 +39,10 @@ export default function Analytics() {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("https://expensive-bonafide-production.up.railway.app/get-data/data", {
+        const Token = localStorage.getItem('token');
+        const response = await axios.get("http://localhost:4000/get-data/data", {
           headers: {
-            "Authorization": `Bearer ${token}`,
+            "Authorization": `Bearer ${Token}`,
           },
         });
 
@@ -51,16 +51,21 @@ export default function Analytics() {
         const departmentMap = {};
         let verified = 0;
         let unverified = 0;
+        let claimed = 0;
+        let unclaimed = 0;
 
         students.forEach((student) => {
-          const dept = student.DEPARTMENT || "Unknown";
+          const dept = student.department || "Unknown";
           const isVerified = Boolean(student.blockchainTxnHash);
+          const isClaimed = Boolean(student.claimed);
 
           if (!departmentMap[dept]) {
             departmentMap[dept] = {
               name: dept,
               Verified: 0,
               Unverified: 0,
+              Claimed: 0,
+              Unclaimed: 0,
               total: 0
             };
           }
@@ -72,6 +77,15 @@ export default function Analytics() {
             departmentMap[dept].Unverified += 1;
             unverified += 1;
           }
+
+          if (isClaimed) {
+            departmentMap[dept].Claimed += 1;
+            claimed += 1;
+          } else {
+            departmentMap[dept].Unclaimed += 1;
+            unclaimed += 1;
+          }
+
           departmentMap[dept].total += 1;
         });
 
@@ -84,6 +98,8 @@ export default function Analytics() {
         setPieData([
           { name: "Verified", value: verified },
           { name: "Unverified", value: unverified },
+          { name: "Claimed", value: claimed },
+          { name: "Unclaimed", value: unclaimed },
         ]);
         setLoading(false);
       } catch (err) {
@@ -104,7 +120,7 @@ export default function Analytics() {
         <main className="p-8 flex-grow">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-blue-800">Student Analytics Dashboard</h2>
-            <p className="text-gray-600">Visual insights into student verification status</p>
+            <p className="text-gray-600">Visual insights into student verification and claim status</p>
           </div>
 
           {loading ? (
@@ -118,7 +134,7 @@ export default function Analytics() {
           ) : (
             <div className="space-y-10">
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-blue-50 rounded-lg p-6 border border-blue-100">
                   <h3 className="text-sm font-medium text-blue-800 uppercase tracking-wider">
                     Total Students
@@ -132,7 +148,15 @@ export default function Analytics() {
                     Verified Students
                   </h3>
                   <p className="mt-2 text-3xl font-semibold text-green-600">
-                    {pieData[0]?.value || 0}
+                    {pieData.find(item => item.name === "Verified")?.value || 0}
+                  </p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-6 border border-purple-100">
+                  <h3 className="text-sm font-medium text-purple-800 uppercase tracking-wider">
+                    Claimed Students
+                  </h3>
+                  <p className="mt-2 text-3xl font-semibold text-purple-600">
+                    {pieData.find(item => item.name === "Claimed")?.value || 0}
                   </p>
                 </div>
                 <div className="bg-red-50 rounded-lg p-6 border border-red-100">
@@ -140,7 +164,7 @@ export default function Analytics() {
                     Unverified Students
                   </h3>
                   <p className="mt-2 text-3xl font-semibold text-red-600">
-                    {pieData[1]?.value || 0}
+                    {pieData.find(item => item.name === "Unverified")?.value || 0}
                   </p>
                 </div>
               </div>
@@ -150,7 +174,7 @@ export default function Analytics() {
                 {/* Bar Chart */}
                 <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                   <h3 className="text-lg font-semibold text-blue-800 mb-4">
-                    Verification by Department
+                    Status by Department
                   </h3>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
@@ -176,6 +200,7 @@ export default function Analytics() {
                         />
                         <Legend />
                         <Bar dataKey="Verified" fill="#3182ce" name="Verified" />
+                        <Bar dataKey="Claimed" fill="#805ad5" name="Claimed" />
                         <Bar dataKey="Unverified" fill="#e53e3e" name="Unverified" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -185,7 +210,7 @@ export default function Analytics() {
                 {/* Pie Chart */}
                 <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                   <h3 className="text-lg font-semibold text-blue-800 mb-4">
-                    Overall Verification Status
+                    Overall Status Distribution
                   </h3>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
@@ -234,7 +259,7 @@ export default function Analytics() {
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
                   <h3 className="text-lg font-semibold text-blue-800">
-                    Department Statistics
+                    Detailed Department Statistics
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
@@ -245,16 +270,19 @@ export default function Analytics() {
                           Department
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
-                          Total Students
+                          Total
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
                           Verified
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
-                          Unverified
+                          Claimed
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
                           Verification Rate
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">
+                          Claim Rate
                         </th>
                       </tr>
                     </thead>
@@ -271,7 +299,7 @@ export default function Analytics() {
                             {dept.Verified}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {dept.Unverified}
+                            {dept.Claimed}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex items-center">
@@ -285,6 +313,21 @@ export default function Analytics() {
                               </div>
                               <span className="ml-2 text-xs font-medium">
                                 {Math.round((dept.Verified / dept.total) * 100)}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex items-center">
+                              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                <div
+                                  className="bg-purple-600 h-2.5 rounded-full"
+                                  style={{
+                                    width: `${(dept.Claimed / dept.total) * 100}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="ml-2 text-xs font-medium">
+                                {Math.round((dept.Claimed / dept.total) * 100)}%
                               </span>
                             </div>
                           </td>

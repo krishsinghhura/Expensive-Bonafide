@@ -7,7 +7,6 @@ const University = require("../model/University");
 const getDataForUser = async (req, res) => {
   try {
     const univId = req.user.id;
-    console.log("Inisde controller",univId);
     
     let data = [];
     let fromRedis = false;
@@ -17,9 +16,7 @@ const getDataForUser = async (req, res) => {
 
     if (redisData) {
       try {
-        const parsedData = JSON.parse(redisData);
-        console.log(parsedData);
-        
+        const parsedData = JSON.parse(redisData);        
         // Safely filter and normalize data for the current university
         data = parsedData
           .filter((entry) => {
@@ -37,7 +34,6 @@ const getDataForUser = async (req, res) => {
       }
     }
     
-    console.log("Querying database for data for", req.user.id);
     
     // If not found in Redis or empty results, query database
     if (!fromRedis || data.length === 0) {

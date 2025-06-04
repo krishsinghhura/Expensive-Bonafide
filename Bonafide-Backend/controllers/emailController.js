@@ -17,7 +17,7 @@ const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 // Smart Contract Instance
 const contract = new ethers.Contract(
-  "0x65047797669259f28cABc1719a0885AFCD27aB57",
+  "0x8ab8898412e7ef63450Bb32787FfDd2C5e760252",
   abi,
   signer
 );
@@ -208,9 +208,7 @@ const pushDataToBlockchain = async (EMAIL) => {
 // Main sync function (Express controller)
 const syncDataToBlockchain = async (req, res) => {
   try {
-    const studentData = await fetchDataFromRedis();
-    console.log(studentData);
-    
+    const studentData = await fetchDataFromRedis();  
 
     if (!Array.isArray(studentData) || studentData.length === 0) {
       return res

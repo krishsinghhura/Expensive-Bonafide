@@ -16,13 +16,15 @@ async function updateClaimData(req,res) {
       if (emailIndex !== -1) {
         // Update only walletAddress in Redis
         dataArray[emailIndex].walletAddress = walletAddress;
+        dataArray[emailIndex].claimed=true;
         await redisClient.set('excel_data', JSON.stringify(dataArray));
         
         return { 
           success: true, 
           updatedIn: 'redis',
           email,
-          walletAddress 
+          walletAddress,
+          clamied:true
         };
       }
     }

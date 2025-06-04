@@ -11,8 +11,19 @@ const ConfirmBlockchainPost = () => {
   const [counter, setCounter] = useState(0);
   const [isCounting, setIsCounting] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [Token,setToken]=useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [Token, setToken] = useState("");
   const navigate = useNavigate();
+
+  // Define the columns we want to display
+  const displayColumns = [
+    'NAME',
+    'EMAIL',
+    'AADHAR NUMBER',
+    'REGISTRATION NUMBER',
+    'DEPARTMENT',
+    'CGPA'
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -26,14 +37,14 @@ const ConfirmBlockchainPost = () => {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token");
-      console.log("before hitting",token);
-      
-      const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/fetch", {
+      console.log("before hitting", token);
+
+      const response = await fetch("http://localhost:4000/api/fetch", {
         method: "GET",
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
       const result = await response.json();
       if (response.ok && result.data) {
@@ -64,7 +75,7 @@ const ConfirmBlockchainPost = () => {
     }, 11000);
 
     try {
-      const response = await fetch("https://expensive-bonafide-production.up.railway.app/block/upload-email", {
+      const response = await fetch("http://localhost:4000/block/upload-email", {
         method: "GET",
       });
 
@@ -113,9 +124,9 @@ const ConfirmBlockchainPost = () => {
               <table className="min-w-full border-collapse text-sm">
                 <thead className="bg-blue-100 sticky top-0 text-blue-700 font-medium">
                   <tr>
-                    {Object.keys(data[0] || {}).map((key) => (
-                      <th key={key} className="border px-4 py-2">
-                        {key}
+                    {displayColumns.map((column) => (
+                      <th key={column} className="border px-4 py-2">
+                        {column}
                       </th>
                     ))}
                   </tr>
@@ -123,9 +134,11 @@ const ConfirmBlockchainPost = () => {
                 <tbody>
                   {data.map((row, index) => (
                     <tr key={index} className="hover:bg-blue-50 transition">
-                      {Object.entries(row).map(([key, value]) => (
-                        <td key={key} className="border px-4 py-2">
-                          {Array.isArray(value) ? value.join(", ") : value}
+                      {displayColumns.map((column) => (
+                        <td key={column} className="border px-4 py-2">
+                          {Array.isArray(row[column]) 
+                            ? row[column].join(", ") 
+                            : row[column] || '-'}
                         </td>
                       ))}
                     </tr>
@@ -135,10 +148,9 @@ const ConfirmBlockchainPost = () => {
             </div>
 
             <div>
-              {/* Your button block */}
               <div className="mt-6 flex gap-4 items-center">
                 <button
-                  onClick={handleConfirm}
+                  onClick={() => setShowConfirmDialog(true)}
                   disabled={isCounting}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition duration-300 disabled:opacity-60"
                 >
@@ -153,11 +165,41 @@ const ConfirmBlockchainPost = () => {
                 </button>
               </div>
 
-              {/* Cancel dialog component */}
               <Cancel
                 showCancelDialog={showCancelDialog}
                 setShowCancelDialog={setShowCancelDialog}
               />
+
+              {showConfirmDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                    <h3 className="text-xl font-bold text-blue-700 mb-4">
+                      Confirm Transaction
+                    </h3>
+                    <p className="mb-6">
+                      Are you sure you want to deduct money from your wallet and
+                      post the data to blockchain?
+                    </p>
+                    <div className="flex justify-end gap-4">
+                      <button
+                        onClick={() => setShowConfirmDialog(false)}
+                        className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowConfirmDialog(false);
+                          handleConfirm();
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             {isCounting && (
               <div className="w-full mt-6">

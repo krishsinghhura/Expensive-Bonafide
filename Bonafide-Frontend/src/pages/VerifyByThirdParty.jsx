@@ -13,11 +13,11 @@ import {
 } from "react-share";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import ClaimNFTButton from "../components/ClaimButton";
-import bonafideLogo from "./bonafide-logo.png";
+import bonafideLogo from './bonafide-logo.png';
 import { useNavigate } from "react-router-dom";
 
 export default function StudentVerifier() {
+  const [email, setEmail] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -29,11 +29,7 @@ export default function StudentVerifier() {
 
   useEffect(() => {
     // Check if token exists in localStorage
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      navigate("/auth");
-    }
+    const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
   }, []);
 
@@ -70,25 +66,20 @@ export default function StudentVerifier() {
     setResult(null);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:4000/verify/verify", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
+      const response = await axios.post(
+        "http://localhost:4000/verify/verify",
+        { email }
+      );
       if (response.status === 200) {
         setResult(response.data);
         setIsDialogOpen(false);
       }
       console.log(response);
       console.log(response.data.certificateUrl);
+      
     } catch (err) {
       console.error("Verification error:", err);
-      setVerificationError(
-        err.response?.data?.error ||
-          "Verification failed. Please try again."
-      );
+      setVerificationError(err.response?.data?.error || "Verification failed. Please check the email and try again.");
       setIsVerifying(false);
     }
   };
@@ -101,46 +92,27 @@ export default function StudentVerifier() {
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-8">
             {/* Verification Card */}
-            <motion.div
+            <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
             >
               <div className="p-6 border-b border-gray-100">
-                <h2 className="text-2xl font-semibold text-gray-800">
-                  Credential Verification
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  Verify your academic credentials using blockchain technology
-                </p>
+                <h2 className="text-2xl font-semibold text-gray-800">Credential Verification</h2>
+                <p className="text-gray-600 mt-1">Verify academic credentials using blockchain technology</p>
               </div>
-
+              
               <div className="p-6">
                 {!result ? (
                   <div className="text-center py-8">
                     <div className="mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-12 w-12 text-blue-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-medium text-gray-800 mb-2">
-                      Verify your credential
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      Click below to verify your credential
-                    </p>
+                    <h3 className="text-xl font-medium text-gray-800 mb-2">Verify a credential</h3>
+                    <p className="text-gray-600 mb-6">Enter the student's email address to begin verification</p>
                     <button
                       onClick={() => setIsDialogOpen(true)}
                       className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
@@ -153,66 +125,39 @@ export default function StudentVerifier() {
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 text-green-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-lg font-medium text-gray-800">
-                          Credential Verified Successfully
-                        </h3>
-                        <p className="text-gray-600">
-                          This credential has been verified on the blockchain
-                        </p>
+                        <h3 className="text-lg font-medium text-gray-800">Credential Verified Successfully</h3>
+                        <p className="text-gray-600">This credential has been verified on the blockchain</p>
                       </div>
                     </div>
-
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <DetailCard
-                        title="Student Information"
+                      <DetailCard 
+                        title="Student Information" 
                         items={[
-                          {
-                            label: "Name",
-                            value: result.name || "Not provided",
-                          },
+                          { label: "Name", value: result.name || "Not provided" },
                           { label: "Email", value: result.email },
-                        ]}
+                        ]} 
                       />
-
-                      <DetailCard
-                        title="Blockchain Details"
+                      
+                      <DetailCard 
+                        title="Blockchain Details" 
                         items={[
-                          {
-                            label: "Transaction Hash",
-                            value: result.transactionHash,
-                            link: `https://subnets-test.avax.network/c-chain/tx/${result.transactionHash}`,
-                          },
-                          {
-                            label: "Verification Date",
-                            value: new Date().toLocaleDateString(),
-                          },
-                        ]}
+                          { label: "Transaction Hash", value: result.transactionHash, link: `https://subnets-test.avax.network/c-chain/tx/${result.transactionHash}` },
+                          { label: "Verification Date", value: new Date().toLocaleDateString() },
+                        ]} 
                       />
                     </div>
-
+                    
                     {result.certificateUrl && (
                       <div className="border border-gray-200 rounded-lg overflow-hidden">
                         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                          <h4 className="text-sm font-medium text-gray-700">
-                            Certificate Preview
-                          </h4>
+                          <h4 className="text-sm font-medium text-gray-700">Certificate Preview</h4>
                         </div>
                         <div className="p-4">
                           <img
@@ -227,7 +172,7 @@ export default function StudentVerifier() {
                 )}
               </div>
             </motion.div>
-
+            
             {/* Share Section - Only shown when verified */}
             {result && (
               <motion.div
@@ -237,27 +182,25 @@ export default function StudentVerifier() {
                 className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
               >
                 <div className="p-6 border-b border-gray-100">
-                  <h3 className="text-lg font-medium text-gray-800">
-                    Share This Credential
-                  </h3>
+                  <h3 className="text-lg font-medium text-gray-800">Share This Credential</h3>
                 </div>
                 <div className="p-6">
                   <div className="flex justify-center space-x-4">
-                    <FacebookShareButton
-                      url={result.certificateUrl || window.location.href}
+                    <FacebookShareButton 
+                      url={result.certificateUrl || window.location.href} 
                       quote="Check out my verified credential!"
                       className="transition-transform duration-200 hover:scale-110"
                     >
                       <FacebookIcon size={40} round />
                     </FacebookShareButton>
-                    <TwitterShareButton
-                      url={result.certificateUrl || window.location.href}
+                    <TwitterShareButton 
+                      url={result.certificateUrl || window.location.href} 
                       title="My verified credential!"
                       className="transition-transform duration-200 hover:scale-110"
                     >
                       <TwitterIcon size={40} round />
                     </TwitterShareButton>
-                    <LinkedinShareButton
+                    <LinkedinShareButton 
                       url={result.certificateUrl || window.location.href}
                       className="transition-transform duration-200 hover:scale-110"
                     >
@@ -276,7 +219,7 @@ export default function StudentVerifier() {
               </motion.div>
             )}
           </div>
-
+          
           {/* Sidebar */}
           <div className="space-y-8">
             {/* Profile Card */}
@@ -287,9 +230,7 @@ export default function StudentVerifier() {
               className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
             >
               <div className="p-6 border-b border-gray-100">
-                <h3 className="text-lg font-medium text-gray-800">
-                  Credential Status
-                </h3>
+                <h3 className="text-lg font-medium text-gray-800">Credential Status</h3>
               </div>
               <div className="p-6">
                 <div className="text-center">
@@ -299,99 +240,26 @@ export default function StudentVerifier() {
                   <p className="text-gray-600 mb-4">
                     {result?.institution || "Educational Institution"}
                   </p>
-
-                  <div
-                    className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
-                      result
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
+                  
+                  <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
+                    result ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                  }`}>
                     {result ? (
                       <>
-                        <svg
-                          className="mr-2 h-4 w-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
+                        <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
                         Verified
                       </>
                     ) : (
                       <>
-                        <svg
-                          className="mr-2 h-4 w-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z"
-                            clipRule="evenodd"
-                          />
+                        <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                         </svg>
                         Not Verified
                       </>
                     )}
                   </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* NFT Claim Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
-            >
-              <div className="p-6 border-b border-gray-100">
-                <h3 className="text-lg font-medium text-gray-800">
-                  Digital Badge
-                </h3>
-              </div>
-              <div className="p-6">
-                <div className="text-center">
-                  <div className="mx-auto w-32 h-32 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                    <img src={bonafideLogo} alt="Bonafide Logo" />
-                  </div>
-                  {isLoggedIn ? (
-                    <>
-                      <p className="text-gray-600 mb-6">
-                        {result
-                          ? "Claim your NFT badge as proof of this verified credential"
-                          : "Verify your credential to claim your NFT badge"}
-                      </p>
-                      <ClaimNFTButton
-                        email={result?.email || ""}
-                        jsonUrl={result?.jsonUrl || ""}
-                        disabled={!result || result.claimed}
-                        claimed={result?.claimed || false}
-                        className="w-full"
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-gray-600 mb-6">
-                        {result
-                          ? "Login to claim your NFT badge for this verified credential"
-                          : "Login to claim NFT badges for verified credentials"}
-                      </p>
-                      <button
-                        onClick={() => {
-                          navigate("/auth");
-                        }}
-                        className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                      >
-                        Login to Claim NFT
-                      </button>
-                    </>
-                  )}
                 </div>
               </div>
             </motion.div>
@@ -414,37 +282,25 @@ export default function StudentVerifier() {
                 className="bg-white rounded-xl shadow-xl max-w-md w-full"
               >
                 <div className="p-6 border-b border-gray-200">
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    Verify Credential
-                  </h3>
+                  <h3 className="text-xl font-semibold text-gray-800">Verify Credential</h3>
                 </div>
-
+                
                 <div className="p-6">
                   {!isVerifying && !verificationError ? (
                     <form onSubmit={handleVerify} className="space-y-6">
-                      <div className="text-center">
-                        <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-8 w-8 text-blue-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        </div>
-                        <h4 className="text-lg font-medium text-gray-800">
-                          Ready to Verify
-                        </h4>
-                        <p className="text-gray-600 mt-1">
-                          Click the button below to verify your credential
-                        </p>
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                          Student Email Address
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          placeholder="student@institution.edu"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        />
                       </div>
                       <div className="flex gap-3">
                         <button
@@ -461,7 +317,7 @@ export default function StudentVerifier() {
                           type="submit"
                           className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                         >
-                          Verify Now
+                          Verify
                         </button>
                       </div>
                     </form>
@@ -469,45 +325,26 @@ export default function StudentVerifier() {
                     <div className="space-y-6">
                       <div className="text-center">
                         <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-8 w-8 text-blue-500 animate-pulse"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
-                        <h4 className="text-lg font-medium text-gray-800">
-                          Verifying Credential
-                        </h4>
-                        <p className="text-gray-600 mt-1">
-                          This may take a few moments...
-                        </p>
+                        <h4 className="text-lg font-medium text-gray-800">Verifying Credential</h4>
+                        <p className="text-gray-600 mt-1">This may take a few moments...</p>
                       </div>
-
+                      
                       <div className="space-y-4">
                         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                           <motion.div
                             className="h-full bg-blue-600 rounded-full"
                             initial={{ width: 0 }}
                             animate={{
-                              width: `${
-                                ((verificationStep + 1) /
-                                  verificationSteps.length) *
-                                100
-                              }%`,
+                              width: `${((verificationStep + 1) / verificationSteps.length) * 100}%`,
                             }}
                             transition={{ duration: 0.5 }}
                           />
                         </div>
-
+                        
                         <ul className="space-y-3">
                           {verificationSteps.map((step, index) => (
                             <motion.li
@@ -519,23 +356,13 @@ export default function StudentVerifier() {
                               }}
                               transition={{ delay: index * 0.3 }}
                               className={`flex items-start space-x-3 ${
-                                index === verificationStep
-                                  ? "text-blue-600"
-                                  : "text-gray-500"
+                                index === verificationStep ? "text-blue-600" : "text-gray-500"
                               }`}
                             >
-                              <span className="flex-shrink-0 mt-0.5">
-                                {step.emoji}
-                              </span>
-                              <span
-                                className={`${
-                                  index <= verificationStep
-                                    ? "font-medium"
-                                    : "font-normal"
-                                }`}
-                              >
-                                {step.label}
-                              </span>
+                              <span className="flex-shrink-0 mt-0.5">{step.emoji}</span>
+                              <span className={`${
+                                index <= verificationStep ? "font-medium" : "font-normal"
+                              }`}>{step.label}</span>
                             </motion.li>
                           ))}
                         </ul>
@@ -544,24 +371,11 @@ export default function StudentVerifier() {
                   ) : verificationError ? (
                     <div className="text-center space-y-6">
                       <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-8 w-8 text-red-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <h4 className="text-lg font-medium text-gray-800">
-                        Verification Failed
-                      </h4>
+                      <h4 className="text-lg font-medium text-gray-800">Verification Failed</h4>
                       <p className="text-gray-600">{verificationError}</p>
                       <button
                         onClick={() => {
@@ -589,9 +403,7 @@ export default function StudentVerifier() {
 function DetailCard({ title, items }) {
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
-        {title}
-      </h4>
+      <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">{title}</h4>
       <dl className="space-y-3">
         {items.map((item, index) => (
           <div key={index}>

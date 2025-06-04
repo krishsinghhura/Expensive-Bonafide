@@ -19,80 +19,76 @@ export default function Records() {
   const navigate = useNavigate();
 
   useEffect(() => {
-  const token = localStorage.getItem("token");
-  setToken(token);
+    const token = localStorage.getItem("token");
+    setToken(token);
 
-  console.log("Token first", token);
+    console.log("Token first", token);
 
-  if (!token) {
-    navigate("/auth");
-  }
-}, []);
+    if (!token) {
+      navigate("/auth");
+    }
+  }, []);
 
-useEffect(() => {
-  const fetchStudentData = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        setLoading(true);
 
-      const token = localStorage.getItem("token");
-      console.log("Token is", token);
+        const token = localStorage.getItem("token");
+        console.log("Token is", token);
 
-      const response = await fetch(
-        "https://expensive-bonafide-production.up.railway.app/get-data/data",
-        {
+        const response = await fetch("http://localhost:4000/get-data/data", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
-        }
-      );
+        });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const data = await response.json();
+        const records = data.data;
+        console.log("Fetched records:", records);
+
+        // Process data to extract departments and academic years
+        const deptSet = new Set();
+        const yearSet = new Set();
+
+        records.forEach((student) => {
+          if (student.department) {
+            deptSet.add(student.department);
+          }
+
+          if (student.createdAt) {
+            const date = new Date(student.createdAt);
+            const year = date.getFullYear();
+            const academicYear = `${year}-${String(year + 1).slice(-2)}`;
+            yearSet.add(academicYear);
+          }
+        });
+
+        const sortedYears = Array.from(yearSet).sort((a, b) =>
+          b.localeCompare(a)
+        );
+        const sortedDepts = Array.from(deptSet).sort();
+
+        setAcademicYears(sortedYears);
+        setDepartments(sortedDepts);
+        setStudentData(records);
+        setSelectedYear(sortedYears[0] || "");
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching student data:", err);
+        setError("Failed to load student data. Please try again later.");
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
-      const records = data.data;
-      console.log("Fetched records:", records);
-
-      // Process data to extract departments and academic years
-      const deptSet = new Set();
-      const yearSet = new Set();
-
-      records.forEach((student) => {
-        if (student.department) {
-          deptSet.add(student.department);
-        }
-
-        if (student.createdAt) {
-          const date = new Date(student.createdAt);
-          const year = date.getFullYear();
-          const academicYear = `${year}-${String(year + 1).slice(-2)}`;
-          yearSet.add(academicYear);
-        }
-      });
-
-      const sortedYears = Array.from(yearSet).sort((a, b) =>
-        b.localeCompare(a)
-      );
-      const sortedDepts = Array.from(deptSet).sort();
-
-      setAcademicYears(sortedYears);
-      setDepartments(sortedDepts);
-      setStudentData(records);
-      setSelectedYear(sortedYears[0] || "");
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching student data:", err);
-      setError("Failed to load student data. Please try again later.");
-      setLoading(false);
-    }
-  };
-
-  fetchStudentData();
-}, []);
-
+    fetchStudentData();
+  }, []);
 
   const handleDeptClick = (dept) => {
     setSelectedDept(selectedDept === dept ? "" : dept);
@@ -332,7 +328,7 @@ useEffect(() => {
                               scope="col"
                               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                             >
-                              Status
+                              Verification Status
                             </th>
                             <th
                               scope="col"
@@ -371,30 +367,32 @@ useEffect(() => {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span
-                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                    student.blockchainTxnHash
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-yellow-100 text-yellow-800"
-                                  }`}
-                                >
-                                  {student.blockchainTxnHash
-                                    ? "Verified"
-                                    : "Pending"}
-                                </span>
-                                {student.claimed && (
-                                  <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                                    Claimed
+                                <div className="flex flex-col space-y-1">
+                                  <span
+                                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                      student.blockchainTxnHash
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-yellow-100 text-yellow-800"
+                                    }`}
+                                  >
+                                    {student.blockchainTxnHash
+                                      ? "Verified"
+                                      : "Pending"}
                                   </span>
-                                )}
+                                  <span
+                                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                      student.claimed
+                                        ? "bg-purple-100 text-purple-800"
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {student.claimed
+                                      ? "Claimed"
+                                      : "Not Claimed"}
+                                  </span>
+                                </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                {/* <button 
-                                  onClick={() => handleView(student)}
-                                  className="text-blue-600 hover:text-blue-900 mr-4"
-                                >
-                                  View
-                                </button> */}
                                 <button
                                   onClick={() => handleDownload(student)}
                                   className="text-blue-600 hover:text-blue-900 cursor-pointer"

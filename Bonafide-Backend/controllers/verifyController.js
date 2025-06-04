@@ -1,45 +1,60 @@
 const Data = require("../model/data"); // Adjust the path if needed
+const Student = require("../model/Student"); // Assuming this is the student model
 const redis = require("../redis/redisClient");
 
 const verifyStudent = async (req, res) => {
-  try {    
-    const { email } = req.body;
+  try {
+    let email;
+
+    // If user ID is present in the request, fetch student and get email
+    if (req.user && req.user.id) {
+      const studentRecord = await Student.findById(req.user.id);
+      if (!studentRecord) {
+        return res.status(404).json({ error: 'Student with given ID not found' });
+      }
+      email = studentRecord.email;
+    } else {
+      email = req.body.email;
+    }
 
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    // 1. First try to find the student in Redis
     let student = null;
     let fromRedis = false;
+    let claimed = false;
+
     const redisData = await redis.get("excel_data");
 
     if (redisData) {
       const parsedData = JSON.parse(redisData);
       student = parsedData.find(entry => entry.EMAIL === email);
-      fromRedis = true;
+
+      if (student) {
+        fromRedis = true;
+        claimed = student.claimed !== undefined ? student.claimed : false;
+      }
     }
 
-    // 2. If not found in Redis, fall back to database
     if (!student) {
       student = await Data.findOne({ email });
       if (!student) {
         return res.status(404).json({ error: 'Student not found' });
       }
+      claimed = student.claimed !== undefined ? student.claimed : false;
     }
 
-    // Verify blockchain transaction
     if (!student.blockchainTxnHash) {
       return res.status(400).json({ error: 'Blockchain transaction not found for this student' });
     }
 
-    // Get all student details
     let name = null;
     let certificateUrl = null;
     let jsonUrl = null;
-    
+
     if (fromRedis) {
-      name = student.name || student.NAME; // Handle different capitalization
+      name = student.name || student.NAME;
       certificateUrl = student.CertificateUrl;
       jsonUrl = student.JSONUrl;
     } else {
@@ -49,16 +64,16 @@ const verifyStudent = async (req, res) => {
       jsonUrl = studentWithCert?.JSONUrl || null;
     }
 
-    // Prepare response
     const response = {
       status: 'OK',
       email: fromRedis ? student.EMAIL : student.email,
-      name: name || undefined, // Only include if exists
+      name: name || undefined,
       transactionHash: student.blockchainTxnHash,
       certificateUrl: certificateUrl || undefined,
-      jsonUrl: jsonUrl || undefined
+      jsonUrl: jsonUrl || undefined,
+      claimed: claimed
     };
-    
+
     return res.status(200).json(response);
 
   } catch (error) {

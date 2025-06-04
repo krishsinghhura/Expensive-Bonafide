@@ -10,6 +10,7 @@ import DepartmentStudentViewer from "./pages/Data";
 import StudentDashboard from "./pages/StudentDashboard";
 import Univ_Analytics from "./pages/Univ_Analytics"
 import Profile from "./pages/Profile"
+import StudentVerifier from "./pages/VerifyByThirdParty";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/student-dashboard" element={<StudentDashboard />} />
         <Route path="/analytics" element={<Univ_Analytics />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/verify-by-third-party" element={<StudentVerifier />} />
       </Routes>
     </BrowserRouter>
   );

@@ -41,26 +41,33 @@ const uploadData = async (req, res) => {
 const getDataFromRedis = async (req, res) => {
   try {
     const univId = req.user.id;
-    console.log("univId is ", univId);
-    
-    // First try to get data from Redis
+    console.log("univId is", univId);
+
+    // Try to get and parse data from Redis
     const redisData = await redis.get("excel_data");
-    
+
     if (redisData) {
-      return res.json({ data: JSON.parse(redisData), source: 'redis' });
+      const parsedData = JSON.parse(redisData);
+      const filteredRedisData = parsedData.filter(item => item.university === univId);
+
+      if (filteredRedisData.length > 0) {
+        return res.json({ data: filteredRedisData, source: 'redis' });
+      }
     }
-    
-    // If not in Redis, fetch from MongoDB
-    const mongoData = await Data.find({ userId: univId }); // Adjust query as needed
-    
-    // Store the data in Redis for future requests (optional)
-    if (mongoData) {
-      await redis.set("excel_data", JSON.stringify(mongoData));
-      // You might want to set an expiration time
-      // await redis.setex("excel_data", 3600, JSON.stringify(mongoData));
+
+    // If not found in Redis, query MongoDB
+    const mongoData = await Data.find({ university: univId });
+
+    // Store full MongoDB data in Redis (optional)
+    if (mongoData.length > 0) {
+      // Optional: store it for all universities under one key
+      const existingData = redisData ? JSON.parse(redisData) : [];
+      const combinedData = [...existingData, ...mongoData];
+      await redis.set("excel_data", JSON.stringify(combinedData));
     }
-    
+
     res.json({ data: mongoData || [], source: 'mongo' });
+
   } catch (err) {
     console.error('Error fetching data:', err);
     res.status(500).json({ error: 'Failed to fetch data' });

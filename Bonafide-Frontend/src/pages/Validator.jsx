@@ -9,6 +9,9 @@ import {
   FaDatabase,
   FaInfoCircle,
   FaExclamationTriangle,
+  FaFileDownload,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -28,7 +31,12 @@ const Validator = () => {
   const [savedData, setSavedData] = useState(null);
   const [alert, setAlert] = useState(null);
   const [dataSaved, setDataSaved] = useState(false);
-  const [token,setToken]=useState("");
+  const [token, setToken] = useState("");
+  
+  // Pagination state
+  const [validCurrentPage, setValidCurrentPage] = useState(1);
+  const [invalidCurrentPage, setInvalidCurrentPage] = useState(1);
+  const [rowsPerPage] = useState(5);
 
   const navigate = useNavigate();
   useEffect(() => {
@@ -39,6 +47,21 @@ const Validator = () => {
       navigate("/auth");
     }
   }, []);
+
+  // Pagination logic
+  const validPaginate = (pageNumber) => setValidCurrentPage(pageNumber);
+  const invalidPaginate = (pageNumber) => setInvalidCurrentPage(pageNumber);
+
+  // Get current rows for pagination
+  const indexOfLastValidRow = validCurrentPage * rowsPerPage;
+  const indexOfFirstValidRow = indexOfLastValidRow - rowsPerPage;
+  const currentValidRows = validRows.slice(indexOfFirstValidRow, indexOfLastValidRow);
+  const validTotalPages = Math.ceil(validRows.length / rowsPerPage);
+
+  const indexOfLastInvalidRow = invalidCurrentPage * rowsPerPage;
+  const indexOfFirstInvalidRow = indexOfLastInvalidRow - rowsPerPage;
+  const currentInvalidRows = invalidRows.slice(indexOfFirstInvalidRow, indexOfLastInvalidRow);
+  const invalidTotalPages = Math.ceil(invalidRows.length / rowsPerPage);
 
   const validateRow = (row) => {
     const errors = [];
@@ -80,6 +103,9 @@ const Validator = () => {
         setLoading(true);
         setValidRows([]);
         setInvalidRows([]);
+        // Reset pagination when new data is loaded
+        setValidCurrentPage(1);
+        setInvalidCurrentPage(1);
 
         const tempValid = [];
         const tempInvalid = [];
@@ -134,19 +160,16 @@ const Validator = () => {
 
     setSaving(true);
     try {
-      console.log("token is",token);
-      
-      const response = await fetch(
-        "https://expensive-bonafide-production.up.railway.app/api/upload",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ data: validRows }),
-        }
-      );
+      console.log("token is", token);
+
+      const response = await fetch("http://localhost:4000/api/upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ data: validRows }),
+      });
 
       const result = await response.json();
       if (response.ok) {
@@ -155,7 +178,7 @@ const Validator = () => {
           message: `${validRows.length} records successfully cached to Redis!`,
         });
         setSavedData(validRows);
-        setDataSaved(true); // Mark data as saved
+        setDataSaved(true);
       } else {
         setAlert({
           type: "error",
@@ -175,18 +198,15 @@ const Validator = () => {
 
   const handleFetchFromRedis = async () => {
     setFetching(true);
-    const Token=localStorage.getItem("token");
+    const Token = localStorage.getItem("token");
     try {
-      const response = await fetch(
-        "https://expensive-bonafide-production.up.railway.app/api/fetch",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${Token}`,
-          },
-        }
-      );
+      const response = await fetch("http://localhost:4000/api/fetch", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Token}`,
+        },
+      });
       const result = await response.json();
       if (response.ok && result.data?.length > 0) {
         setSavedData(result.data);
@@ -210,6 +230,16 @@ const Validator = () => {
     navigate("/confirmation");
   };
 
+  const handleDownloadTemplate = () => {
+    const filePath = "/student_data.xlsx"; // Note the leading slash
+    const link = document.createElement("a");
+    link.href = filePath;
+    link.download = "student_data_template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     handleFetchFromRedis();
   }, []);
@@ -221,11 +251,103 @@ const Validator = () => {
     }
   }, [alert]);
 
+  // Pagination component
+  const Pagination = ({ currentPage, totalPages, paginate, type }) => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+
+    let startPage, endPage;
+    if (totalPages <= maxVisiblePages) {
+      startPage = 1;
+      endPage = totalPages;
+    } else {
+      const maxPagesBeforeCurrent = Math.floor(maxVisiblePages / 2);
+      const maxPagesAfterCurrent = Math.ceil(maxVisiblePages / 2) - 1;
+      
+      if (currentPage <= maxPagesBeforeCurrent) {
+        startPage = 1;
+        endPage = maxVisiblePages;
+      } else if (currentPage + maxPagesAfterCurrent >= totalPages) {
+        startPage = totalPages - maxVisiblePages + 1;
+        endPage = totalPages;
+      } else {
+        startPage = currentPage - maxPagesBeforeCurrent;
+        endPage = currentPage + maxPagesAfterCurrent;
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="flex items-center justify-between mt-4">
+        <div className="text-sm text-gray-700">
+          Showing <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> to{" "}
+          <span className="font-medium">
+            {Math.min(currentPage * rowsPerPage, type === 'valid' ? validRows.length : invalidRows.length)}
+          </span>{" "}
+          of <span className="font-medium">{type === 'valid' ? validRows.length : invalidRows.length}</span> records
+        </div>
+        <nav className="flex items-center space-x-1">
+          <button
+            onClick={() => paginate(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
+          >
+            <FaChevronLeft className="h-4 w-4" />
+          </button>
+          
+          {startPage > 1 && (
+            <>
+              <button
+                onClick={() => paginate(1)}
+                className={`px-3 py-1 rounded-md ${1 === currentPage ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                1
+              </button>
+              {startPage > 2 && <span className="px-2">...</span>}
+            </>
+          )}
+          
+          {pageNumbers.map(number => (
+            <button
+              key={number}
+              onClick={() => paginate(number)}
+              className={`px-3 py-1 rounded-md ${number === currentPage ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+            >
+              {number}
+            </button>
+          ))}
+          
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="px-2">...</span>}
+              <button
+                onClick={() => paginate(totalPages)}
+                className={`px-3 py-1 rounded-md ${totalPages === currentPage ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+          
+          <button
+            onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
+          >
+            <FaChevronRight className="h-4 w-4" />
+          </button>
+        </nav>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
 
-      {/* Alert Notification */}
       {alert && (
         <motion.div
           className={`fixed top-4 right-4 p-4 rounded-md shadow-lg max-w-xs w-full z-50 flex items-start ${
@@ -344,6 +466,15 @@ const Validator = () => {
               />
             </div>
 
+            {/* Download Template Button */}
+            <button
+              onClick={handleDownloadTemplate}
+              className="w-full mb-6 flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <FaFileDownload className="mr-2 text-blue-500" />
+              Download Template File
+              <p className=" ml-2">| Note: This data cannot be used for uploading</p>
+            </button>
             <div className="flex space-x-4">
               <button
                 onClick={handleSave}
@@ -491,7 +622,7 @@ const Validator = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {validRows.slice(0, 5).map((row, i) => (
+                        {currentValidRows.map((row, i) => (
                           <tr key={i} className="hover:bg-gray-50">
                             {Object.values(row).map((val, idx) => (
                               <td
@@ -505,11 +636,12 @@ const Validator = () => {
                         ))}
                       </tbody>
                     </table>
-                    {validRows.length > 5 && (
-                      <p className="mt-2 text-sm text-gray-500">
-                        Showing first 5 of {validRows.length} valid records
-                      </p>
-                    )}
+                    <Pagination
+                      currentPage={validCurrentPage}
+                      totalPages={validTotalPages}
+                      paginate={validPaginate}
+                      type="valid"
+                    />
                   </div>
                 ) : (
                   <p className="text-gray-500 text-sm">
@@ -555,7 +687,7 @@ const Validator = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {invalidRows.slice(0, 5).map((row, i) => (
+                        {currentInvalidRows.map((row, i) => (
                           <tr key={i} className="hover:bg-red-50">
                             {Object.entries(row)
                               .filter(([key]) => key !== "errors")
@@ -574,11 +706,12 @@ const Validator = () => {
                         ))}
                       </tbody>
                     </table>
-                    {invalidRows.length > 5 && (
-                      <p className="mt-2 text-sm text-gray-500">
-                        Showing first 5 of {invalidRows.length} invalid records
-                      </p>
-                    )}
+                    <Pagination
+                      currentPage={invalidCurrentPage}
+                      totalPages={invalidTotalPages}
+                      paginate={invalidPaginate}
+                      type="invalid"
+                    />
                   </div>
                 ) : (
                   <p className="text-gray-500 text-sm">

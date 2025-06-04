@@ -11,7 +11,7 @@ const Hero = () => {
       const token=localStorage.getItem("token");
       try {
         const response = await axios.get(
-          "https://bonafide-backend.onrender.com/get-data/details",
+          "http://localhost:4000/get-data/details",
           {
             headers: {
             "Authorization": `Bearer ${token}`,
@@ -49,7 +49,7 @@ const Hero = () => {
             onClick={()=>{
               navigate("/auth");
             }}
-            className="bg-white text-indigo-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 hover:scale-105 transition-transform duration-300"
+            className="bg-white text-indigo-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 hover:scale-105 transition-transform duration-300 cursor-pointer"
           >
             Get Started
           </a>
