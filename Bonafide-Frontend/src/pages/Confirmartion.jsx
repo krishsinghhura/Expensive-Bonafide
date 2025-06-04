@@ -95,7 +95,6 @@ const ConfirmBlockchainPost = () => {
       }
     } catch (err) {
       console.error(err);
-      alert("❌ Error posting to blockchain.");
     }
   };
 

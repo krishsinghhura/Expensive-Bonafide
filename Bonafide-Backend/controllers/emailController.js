@@ -17,7 +17,7 @@ const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 // Smart Contract Instance
 const contract = new ethers.Contract(
-  "0x8ab8898412e7ef63450Bb32787FfDd2C5e760252",
+  "0xF27e24E79cCa7bc628Fa7c7A6c079c5d557A9bE4",
   abi,
   signer
 );
@@ -42,8 +42,11 @@ const cancelSync = (req, res) => {
   if (!syncState.currentEmail) {
     return res.status(400).send("❗ No sync in progress to cancel.");
   }
-
+  
   syncState.isCancelled = true;
+  console.log(syncState.isCancelled);
+  
+  
   res.status(200).send(`🛑 Sync cancellation requested. Will stop after processing: ${syncState.currentEmail}`);
 };
 
@@ -51,6 +54,13 @@ const cancelSync = (req, res) => {
 const pushDataToBlockchain = async (EMAIL) => {
   try {
     console.log(`🚀 Starting transaction for ${EMAIL}`);
+    console.log(syncState.isCancelled);
+    
+
+    if (syncState.isCancelled) {
+    console.log(`🛑 Sync cancelled before pushing ${EMAIL}`);
+    return;
+   }
 
     // 1. Write email hash to blockchain
     const tx = await contract.storeEmailHash(EMAIL);
@@ -82,12 +92,12 @@ const pushDataToBlockchain = async (EMAIL) => {
     // 3. Generate certificate
     const { NAME, DEPARTMENT, REGISTRATION_NUMBER, CGPA } = studentData;
     const baseFileName = NAME.replace(/\s+/g, "_");
-    
+
     // Generate unique identifier (timestamp + random string)
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 8);
     const uniqueIdentifier = `${timestamp}_${randomString}`;
-    
+
     const outputFileName = `${baseFileName}_${uniqueIdentifier}`;
     const certificateBuffer = await generateCertificate({
       name: NAME,
@@ -227,8 +237,8 @@ const syncDataToBlockchain = async (req, res) => {
         await pushDataToBlockchain(student.EMAIL);
       }
 
-      syncState.currentEmail = null; // Reset when done
-      syncState.isCancelled = false; // Optional: auto-reset flag
+      // syncState.currentEmail = null; // Reset when done
+      // syncState.isCancelled = false; // Optional: auto-reset flag
 
     }
 

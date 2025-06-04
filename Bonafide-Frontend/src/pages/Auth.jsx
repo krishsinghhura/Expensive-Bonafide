@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaUniversity, FaUserGraduate, FaLock, FaEnvelope, FaUser, FaKey } from "react-icons/fa";
+import { FaUniversity, FaUserGraduate, FaLock, FaEnvelope, FaUser, FaKey, FaTimes } from "react-icons/fa";
 import Cookies from "js-cookie";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AuthPage() {
   const [isSignIn, setIsSignIn] = useState(true);
   const [userType, setUserType] = useState("university");
   const [formErrors, setFormErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState(""); // New state for authentication errors
+  const [authError, setAuthError] = useState("");
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otpError, setOtpError] = useState("");
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -21,7 +26,6 @@ export default function AuthPage() {
 
   const navigate = useNavigate();
 
-  // Check for existing tokens and redirect if found
   useEffect(() => {
     const StudentToken = Cookies.get("StudentToken");
     const universityToken = Cookies.get("token");
@@ -36,7 +40,7 @@ export default function AuthPage() {
   const toggleForm = () => {
     setIsSignIn(!isSignIn);
     setFormErrors({});
-    setAuthError(""); // Clear auth error when toggling forms
+    setAuthError("");
     setFormData({
       name: "",
       email: "",
@@ -49,7 +53,7 @@ export default function AuthPage() {
   const handleUserTypeChange = (type) => {
     setUserType(type);
     setFormErrors({});
-    setAuthError(""); // Clear auth error when changing user type
+    setAuthError("");
     setFormData({
       name: "",
       email: "",
@@ -65,11 +69,11 @@ export default function AuthPage() {
       ...prev,
       [name]: value,
     }));
-    // Clear error when user types
+    
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
-    // Clear auth error when typing in email or password
+    
     if (authError && (name === "email" || name === "password")) {
       setAuthError("");
     }
@@ -111,7 +115,7 @@ export default function AuthPage() {
     e.preventDefault();
     const errors = validateForm();
     setFormErrors(errors);
-    setAuthError(""); // Clear previous auth errors
+    setAuthError("");
     
     if (Object.keys(errors).length > 0) return;
     
@@ -121,7 +125,7 @@ export default function AuthPage() {
     
     try {
       if (isSignIn) {
-        // Login logic
+        // Login logic remains the same
         const response = await axios.post(`${apiBase}/${userType}/login`, {
           email: formData.email,
           password: formData.password,
@@ -155,15 +159,14 @@ export default function AuthPage() {
           localStorage.setItem("token", response.data.token);
           navigate("/student-dashboard", { state: response.data });
         } else {
-          Cookies.set("token",response.data.token);
-          localStorage.setItem("token", response.data.token);
-          navigate("/data");
+          // For university, show OTP modal instead of navigating
+          setRegisteredEmail(formData.email);
+          setShowOtpModal(true);
         }
       }
     } catch (error) {
       console.error("Authentication error:", error);
       
-      // Handle specific error cases
       if (error.response) {
         if (error.response.status === 401) {
           setAuthError("Invalid email or password");
@@ -186,6 +189,65 @@ export default function AuthPage() {
     }
   };
 
+  const handleOtpChange = (index, value) => {
+    if (/^\d*$/.test(value) && value.length <= 1) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+      
+      // Auto focus to next input
+      if (value && index < 3) {
+        document.getElementById(`otp-input-${index + 1}`).focus();
+      }
+    }
+  };
+
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    const otpValue = otp.join("");
+    
+    if (otpValue.length !== 4) {
+      setOtpError("Please enter a valid 4-digit OTP");
+      return;
+    }
+    
+    setIsLoading(true);
+    setOtpError("");
+    
+    try {
+      const response = await axios.post("http://localhost:4000/api/university/verify-otp", {
+        email: registeredEmail,
+        otp: otpValue
+      });
+      
+      Cookies.set("token", response.data.token);
+      localStorage.setItem("token", response.data.token);
+      navigate("/data");
+    } catch (error) {
+      console.error("OTP verification error:", error);
+      setOtpError(error.response?.data?.message || "Invalid OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resendOtp = async () => {
+    setIsLoading(true);
+    setOtpError("");
+    
+    try {
+      await axios.post("http://localhost:4000/api/university/resend-otp", {
+        email: registeredEmail
+      });
+      setOtpError(""); // Clear any previous errors
+    } catch (error) {
+      console.error("Resend OTP error:", error);
+      setOtpError("Failed to resend OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
       <div className="w-full max-w-md">
@@ -201,7 +263,6 @@ export default function AuthPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-blue-100">
-          {/* User Type Selector */}
           <div className="flex border-b border-blue-100">
             <button
               onClick={() => handleUserTypeChange("university")}
@@ -232,7 +293,6 @@ export default function AuthPage() {
               {isSignIn ? "Sign In" : "Sign Up"} as {userType === "university" ? "Institution" : "Student"}
             </h2>
 
-            {/* Authentication error message */}
             {authError && (
               <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                 {authError}
@@ -240,7 +300,6 @@ export default function AuthPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* ... rest of your form code remains the same ... */}
               {!isSignIn && userType === "university" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -405,6 +464,97 @@ export default function AuthPage() {
           <p>By continuing, you agree to our Terms of Service and Privacy Policy</p>
         </div>
       </div>
+
+      {/* OTP Verification Modal */}
+      <AnimatePresence>
+        {showOtpModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative"
+            >
+              <button 
+                onClick={() => setShowOtpModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes />
+              </button>
+              
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-blue-800">Verify Your Email</h2>
+                <p className="text-gray-600 mt-2">
+                  We've sent a 4-digit verification code to <span className="font-semibold">{registeredEmail}</span>
+                </p>
+              </div>
+              
+              <form onSubmit={handleOtpSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 text-center">
+                    Enter Verification Code
+                  </label>
+                  <div className="flex justify-center space-x-3">
+                    {otp.map((digit, index) => (
+                      <input
+                        key={index}
+                        id={`otp-input-${index}`}
+                        type="text"
+                        maxLength="1"
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        className="w-14 h-14 text-center text-2xl border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autoFocus={index === 0}
+                      />
+                    ))}
+                  </div>
+                  {otpError && (
+                    <p className="mt-2 text-sm text-red-600 text-center">{otpError}</p>
+                  )}
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center transition-colors ${
+                    isLoading ? 'opacity-75 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify & Continue"
+                  )}
+                </button>
+                
+                <div className="text-center text-sm text-gray-600">
+                  <p>Didn't receive the code? 
+                    <button 
+                      type="button" 
+                      onClick={resendOtp}
+                      className="ml-1 text-blue-600 hover:text-blue-800 font-medium"
+                      disabled={isLoading}
+                    >
+                      Resend OTP
+                    </button>
+                  </p>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
