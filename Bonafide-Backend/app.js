@@ -16,7 +16,7 @@ app.use(cookieParser());
 app.use(cors({
   origin: 'https://expensive-bonafide.vercel.app/',  // Frontend origin
   credentials: true,               // Allow cookies to be sent
-}));
+}));//allow
 
 app.use(express.json());
 
