@@ -67,7 +67,7 @@ export default function StudentVerifier() {
 
     try {
       const response = await axios.post(
-        "http://localhost:4000/verify/verify",
+        "https://expensive-bonafide-production.up.railway.app/verify/verify",
         { email }
       );
       if (response.status === 200) {

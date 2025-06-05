@@ -26,7 +26,7 @@ const Profile = () => {
         }
 
         const response = await axios.get(
-          "http://localhost:4000/get-data/details",
+          "https://expensive-bonafide-production.up.railway.app/get-data/details",
           {
             headers: {
               "Content-Type": "application/json",

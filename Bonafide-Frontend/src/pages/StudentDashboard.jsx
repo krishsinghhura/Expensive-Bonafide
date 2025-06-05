@@ -28,7 +28,7 @@ const StudentDashboard = () => {
       try {
         const token=localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:4000/get-data/student",
+          "https://expensive-bonafide-production.up.railway.app/get-data/student",
           {
              headers: {
               "Content-Type": "application/json",

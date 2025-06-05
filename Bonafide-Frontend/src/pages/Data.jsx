@@ -37,7 +37,7 @@ export default function Records() {
         const token = localStorage.getItem("token");
         console.log("Token is", token);
 
-        const response = await fetch("http://localhost:4000/get-data/data", {
+        const response = await fetch("https://expensive-bonafide-production.up.railway.app/get-data/data", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

@@ -39,7 +39,7 @@ const ConfirmBlockchainPost = () => {
       const token = localStorage.getItem("token");
       console.log("before hitting", token);
 
-      const response = await fetch("http://localhost:4000/api/fetch", {
+      const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/fetch", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -75,7 +75,7 @@ const ConfirmBlockchainPost = () => {
     }, 11000);
 
     try {
-      const response = await fetch("http://localhost:4000/block/upload-email", {
+      const response = await fetch("https://expensive-bonafide-production.up.railway.app/block/upload-email", {
         method: "GET",
       });
 

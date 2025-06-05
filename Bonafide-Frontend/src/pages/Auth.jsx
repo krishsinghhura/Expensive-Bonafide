@@ -215,7 +215,7 @@ export default function AuthPage() {
     setOtpError("");
     
     try {
-      const response = await axios.post("http://localhost:4000/api/university/verify-otp", {
+      const response = await axios.post("https://expensive-bonafide-production.up.railway.app/api/university/verify-otp", {
         email: registeredEmail,
         otp: otpValue
       });
@@ -236,7 +236,7 @@ export default function AuthPage() {
     setOtpError("");
     
     try {
-      await axios.post("http://localhost:4000/api/university/resend-otp", {
+      await axios.post("https://expensive-bonafide-production.up.railway.app/api/university/resend-otp", {
         email: registeredEmail
       });
       setOtpError(""); // Clear any previous errors

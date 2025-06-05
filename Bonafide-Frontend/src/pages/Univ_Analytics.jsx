@@ -40,7 +40,7 @@ export default function Analytics() {
       try {
         setLoading(true);
         const Token = localStorage.getItem('token');
-        const response = await axios.get("http://localhost:4000/get-data/data", {
+        const response = await axios.get("https://expensive-bonafide-production.up.railway.app/get-data/data", {
           headers: {
             "Authorization": `Bearer ${Token}`,
           },

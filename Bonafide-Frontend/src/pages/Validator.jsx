@@ -162,7 +162,7 @@ const Validator = () => {
     try {
       console.log("token is", token);
 
-      const response = await fetch("http://localhost:4000/api/upload", {
+      const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/upload", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -200,7 +200,7 @@ const Validator = () => {
     setFetching(true);
     const Token = localStorage.getItem("token");
     try {
-      const response = await fetch("http://localhost:4000/api/fetch", {
+      const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/fetch", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

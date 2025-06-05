@@ -71,7 +71,7 @@ export default function StudentVerifier() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:4000/verify/verify", {
+      const response = await axios.get("https://expensive-bonafide-production.up.railway.app/verify/verify", {
         headers: {
           Authorization: `Bearer ${token}`
         }

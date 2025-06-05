@@ -11,7 +11,7 @@ const Hero = () => {
       const token=localStorage.getItem("token");
       try {
         const response = await axios.get(
-          "http://localhost:4000/get-data/details",
+          "https://expensive-bonafide-production.up.railway.app/get-data/details",
           {
             headers: {
             "Authorization": `Bearer ${token}`,

@@ -35,7 +35,7 @@ const EditData = () => {
         setError(null);
         const token = getAuthToken();
         
-        const response = await fetch("http://localhost:4000/api/fetch", {
+        const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/fetch", {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -78,7 +78,7 @@ const EditData = () => {
       setError(null);
       const token = getAuthToken();
 
-      const response = await fetch("http://localhost:4000/api/upload", {
+      const response = await fetch("https://expensive-bonafide-production.up.railway.app/api/upload", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
