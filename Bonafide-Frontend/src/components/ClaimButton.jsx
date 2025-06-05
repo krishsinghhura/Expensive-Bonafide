@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import ABI from "./abi.json";
 import axios from "axios";
 
-const CONTRACT_ADDRESS = "0xF27e24E79cCa7bc628Fa7c7A6c079c5d557A9bE4";
+const CONTRACT_ADDRESS = "0xD6E85Fec280ABfBA5a3cA57426024fbe71c5af78";
 
 const ClaimEmailNFT = ({ email = "", jsonUrl = "", disabled = false, claimed = false }) => {
   const [status, setStatus] = useState("");

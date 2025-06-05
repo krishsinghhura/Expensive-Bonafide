@@ -121,7 +121,7 @@ export default function AuthPage() {
     
     setIsLoading(true);
     
-    const apiBase = "http://localhost:4000/api";
+    const apiBase = "https://expensive-bonafide-production-3379.up.railway.app/api";
     
     try {
       if (isSignIn) {
