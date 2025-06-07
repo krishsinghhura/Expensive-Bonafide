@@ -229,6 +229,7 @@ const syncDataToBlockchain = async (req, res) => {
     for (const student of studentData) {
       if (syncState.isCancelled) {
         console.log("🛑 Sync cancelled by user.");
+        syncState.isCancelled = false; // Optional: auto-reset flag
         break;
       }
 
@@ -238,7 +239,6 @@ const syncDataToBlockchain = async (req, res) => {
       }
 
       // syncState.currentEmail = null; // Reset when done
-      syncState.isCancelled = false; // Optional: auto-reset flag
 
     }
 
