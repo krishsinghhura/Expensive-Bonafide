@@ -238,7 +238,7 @@ const syncDataToBlockchain = async (req, res) => {
       }
 
       // syncState.currentEmail = null; // Reset when done
-      // syncState.isCancelled = false; // Optional: auto-reset flag
+      syncState.isCancelled = false; // Optional: auto-reset flag
 
     }
 
